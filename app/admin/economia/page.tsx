@@ -116,19 +116,19 @@ export default async function PaginaEconomia() {
               <tr>
                 <td className="py-2 text-fumo">Ti resta, pratica singola</td>
                 <td className="numeri py-2 text-right font-medium text-inchiostro">
-                  {euro(margineCompleto({ prezzo: PREZZO_PRATICA, incasso: "mor", creatorPct: 0.25, tassoRimborso: 0.15, garanziaCredito: true }).tieni)}
+                  {euro(margineCompleto({ prezzo: PREZZO_PRATICA, incasso: "mor", creatorPct: 0.4, tassoRimborso: 0.15, garanziaCredito: true }).tieni)}
                 </td>
                 <td className="numeri py-2 text-right font-medium text-inchiostro">
-                  {euro(margineCompleto({ prezzo: PREZZO_PRATICA, incasso: "stripe", creatorPct: 0.25, tassoRimborso: 0.15, garanziaCredito: true }).tieni)}
+                  {euro(margineCompleto({ prezzo: PREZZO_PRATICA, incasso: "stripe", creatorPct: 0.4, tassoRimborso: 0.15, garanziaCredito: true }).tieni)}
                 </td>
               </tr>
               <tr>
                 <td className="py-2 text-fumo">Ti resta, pratica famiglia</td>
                 <td className="numeri py-2 text-right font-medium text-inchiostro">
-                  {euro(margineCompleto({ prezzo: PREZZO_FAMIGLIA, incasso: "mor", creatorPct: 0.25, tassoRimborso: 0.15, garanziaCredito: true }).tieni)}
+                  {euro(margineCompleto({ prezzo: PREZZO_FAMIGLIA, incasso: "mor", creatorPct: 0.4, tassoRimborso: 0.15, garanziaCredito: true }).tieni)}
                 </td>
                 <td className="numeri py-2 text-right font-medium text-inchiostro">
-                  {euro(margineCompleto({ prezzo: PREZZO_FAMIGLIA, incasso: "stripe", creatorPct: 0.25, tassoRimborso: 0.15, garanziaCredito: true }).tieni)}
+                  {euro(margineCompleto({ prezzo: PREZZO_FAMIGLIA, incasso: "stripe", creatorPct: 0.4, tassoRimborso: 0.15, garanziaCredito: true }).tieni)}
                 </td>
               </tr>
             </tbody>
@@ -143,9 +143,9 @@ export default async function PaginaEconomia() {
         </p>
       </Scheda>
 
-      {/* ── DOVE VA UNA PRATICA DA 14,90 ───────────────────────────── */}
+      {/* ── DOVE VA UNA PRATICA ────────────────────────────────────── */}
       <Scheda
-        titolo="Dove finiscono i 14,90 di una pratica"
+        titolo={`Dove finiscono i ${euro(PREZZO_PRATICA)} di una pratica`}
         sotto="Ogni riga è un pezzo che se ne va. Quello che resta è il netto."
       >
         <div className="overflow-x-auto">

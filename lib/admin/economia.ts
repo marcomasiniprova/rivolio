@@ -16,11 +16,15 @@
  * reclami vanno a buon fine.
  */
 
+import { LISTINO_BASE } from "@/lib/prezzi";
+
 /* ─────────────────────────── RICAVI ─────────────────────────── */
 
-/** Il prezzo della pratica (il check da 1,99 è un anticipo che si scala). */
-export const PREZZO_PRATICA = 14.9;
-export const PREZZO_FAMIGLIA = 29.9;
+/* Il prezzo della pratica (il check da 1,99 è un anticipo che si scala).
+   Letto dal listino, non riscritto a mano: così il giorno di un cambio prezzo
+   il conto economico non resta indietro in silenzio. */
+export const PREZZO_PRATICA = LISTINO_BASE.singola;
+export const PREZZO_FAMIGLIA = LISTINO_BASE.famiglia;
 
 /* ──────────────────────── COSTI VARIABILI ───────────────────── */
 

@@ -231,7 +231,7 @@ export const NODI: Nodo[] = [
     titolo: "Il muro dell'analisi",
     riga: "1,99 per sbloccare il verdetto. Nasce spento.",
     dentro:
-      "Primo dei due punti in cui entrano soldi. Non è un rincaro: i 1,99 si scalano dalla pratica, quindi il totale del percorso resta 14,90. Un verdetto incerto non consuma il credito, perché chi paga per sapere e si sente rispondere «non lo so» non ha comprato una risposta. Si accende con una variabile su Netlify.",
+      "Primo dei due punti in cui entrano soldi. Non è un rincaro: i 1,99 si scalano dalla pratica, quindi il totale del percorso resta 16,90. Un verdetto incerto non consuma il credito, perché chi paga per sapere e si sente rispondere «non lo so» non ha comprato una risposta. Si accende con una variabile su Netlify.",
     stato: "spento",
     icona: "muro",
     x: 74,
