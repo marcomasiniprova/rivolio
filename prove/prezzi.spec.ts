@@ -12,18 +12,18 @@ import { COOKIE_PREZZO, LISTINI, confronto, euro, listinoDi, varianteValida } fr
 
 test.describe("I due listini", () => {
   test("le cifre sono quelle decise, scritte in italiano", () => {
-    expect(LISTINI.a.singolaTesto).toBe("14,90€");
+    expect(LISTINI.a.singolaTesto).toBe("16,90€");
     expect(LISTINI.a.famigliaTesto).toBe("29,90€");
     expect(LISTINI.b.singolaTesto).toBe("24,90€");
     expect(LISTINI.b.famigliaTesto).toBe("39,90€");
     // mai il punto decimale all'inglese
-    expect(euro(14.9)).not.toContain(".");
+    expect(euro(16.9)).not.toContain(".");
   });
 
   test("un cookie sporco non rompe niente: si torna al listino di sempre", () => {
     expect(varianteValida("c")).toBeNull();
     expect(varianteValida(undefined)).toBeNull();
-    expect(listinoDi(null).singolaTesto).toBe("14,90€");
+    expect(listinoDi(null).singolaTesto).toBe("16,90€");
     expect(listinoDi("b").singolaTesto).toBe("24,90€");
   });
 
@@ -31,7 +31,7 @@ test.describe("I due listini", () => {
     const a = confronto(LISTINI.a);
     expect(a.trattenutoPortale).toBe(210);
     expect(a.restanoPortale).toBe(390);
-    expect(a.restanoNostro).toBe(585.1);
+    expect(a.restanoNostro).toBe(583.1);
 
     const b = confronto(LISTINI.b);
     expect(b.restanoNostro).toBe(575.1);
@@ -67,7 +67,7 @@ test.describe("Col test spento c'è un prezzo solo", () => {
   test("un cookie vecchio NON cambia il prezzo che si legge", async ({ page }) => {
     /* ⚠️ Questa è la crepa trovata spegnendo il test, ed è sui soldi: il
        cookie della variante dura SEI MESI. Chi l'aveva preso da acceso
-       avrebbe letto 14,90 sulla landing e trovato 24,90 alla cassa. Un
+       avrebbe letto 16,90 sulla landing e trovato 24,90 alla cassa. Un
        prezzo che cambia fra il bottone e il pagamento è il motivo per cui
        uno chiude la pagina. */
     await page.context().addCookies([
@@ -75,7 +75,7 @@ test.describe("Col test spento c'è un prezzo solo", () => {
     ]);
     await page.goto("/#prezzi");
     const sezione = page.locator("#prezzi");
-    await expect(sezione).toContainText("14,90€");
+    await expect(sezione).toContainText("16,90€");
     await expect(sezione).not.toContainText("39,90€");
   });
 });

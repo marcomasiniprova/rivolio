@@ -58,7 +58,7 @@ test.describe("Landing page", () => {
     await expect(page.getByText(COPY.hero.notaFinestra)).toBeVisible();
   });
 
-  test("il confronto prezzi torna: 600 - 210 = 390, 600 - 14,90 = 585,10", async ({
+  test("il confronto prezzi torna: 600 - 210 = 390, 600 - 16,90 = 583,10", async ({
     page,
   }) => {
     /* Dal 9/08 il sito serve due listini a caso (test dei prezzi): qui si
@@ -78,13 +78,13 @@ test.describe("Landing page", () => {
        controllare, ed è peggio di una prova che non c'è.
        `toContainText` riprova finché non trova, entro il suo tempo. */
     // i due prezzi chiusi in SPEC §5
-    await expect(prezzi).toContainText("14,90€");
+    await expect(prezzi).toContainText("16,90€");
     await expect(prezzi).toContainText("29,90€");
 
     // il conto del confronto coi portali a percentuale: la somma regge
     await expect(prezzi).toContainText("210€");
     await expect(prezzi).toContainText("390€");
-    await expect(prezzi).toContainText("585,10€");
+    await expect(prezzi).toContainText("583,10€");
     const testo = await prezzi.innerText();
 
     /* E la cifra si apre: il dettaglio dichiara da dove viene il 35-50%.

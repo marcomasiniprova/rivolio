@@ -71,7 +71,7 @@ test.describe("Il check dalla home", () => {
     await expect(page.getByText(COPY.risultato.nonIdoneo.titolo).first()).toBeVisible();
     // il dato mostrato: 179 minuti, nel formato leggibile (9/08)
     await expect(page.getByText(/2 h e 59 min/).first()).toBeVisible();
-    await expect(page.getByText(/14,90/)).toHaveCount(0);
+    await expect(page.getByText(/16,90/)).toHaveCount(0);
   });
 
   test("input invalido: messaggio di validazione, si resta sulla home", async ({ page }) => {
@@ -155,7 +155,7 @@ test.describe("La pagina del risultato (id demo, senza chiavi)", () => {
       page.getByRole("link", { name: COPY.risultato.nonIdoneo.cta }).first(),
     ).toBeVisible();
     // gratis vuol dire gratis: nessun prezzo in pagina
-    await expect(page.getByText(/14,90|29,90/)).toHaveCount(0);
+    await expect(page.getByText(/16,90|29,90/)).toHaveCount(0);
   });
 
   test("INCERTO (cancellato): si spiega e NON si vende", async ({ page }) => {
@@ -164,7 +164,7 @@ test.describe("La pagina del risultato (id demo, senza chiavi)", () => {
     // la spiegazione viene dal motivo del motore
     await expect(page.getByText(/cancellato/).first()).toBeVisible();
     // MAI vendere sul giallo: niente prezzi, niente bottoni d'acquisto
-    await expect(page.getByText(/14,90|29,90/)).toHaveCount(0);
+    await expect(page.getByText(/16,90|29,90/)).toHaveCount(0);
   });
 
   test("un volo demo che non esiste: pannello chiaro con l'uscita", async ({ page }) => {
