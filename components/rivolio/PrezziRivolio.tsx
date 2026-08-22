@@ -5,7 +5,9 @@ import { COPY } from "@/lib/copy";
 import { listinoCorrente } from "@/lib/prezzi-server";
 
 /**
- * I prezzi (SPEC §5, chiusi): check gratis, pratica 14,90€, famiglia 29,90€.
+ * I prezzi: check 1,99 di lancio (si scala dalla pratica), pratica 16,90€,
+ * famiglia 29,90€. Le cifre non si scrivono qui: vengono dal listino
+ * (listinoCorrente), cosi' la pagina e la cassa non possono divergere.
  * Niente altri SKU, niente toggle mensile/annuale: i prezzi sono una tantum.
  *
  * Il giro estetico dell'8/08 sera (scelta di Valerio col popup): i due
