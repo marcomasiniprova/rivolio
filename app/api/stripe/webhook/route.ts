@@ -3,6 +3,7 @@ import type Stripe from "stripe";
 import { stripe, stripeAttivo } from "@/lib/stripe";
 import { evadiPagamentoPratica } from "@/lib/pratiche/evasione";
 import type { TipoPratica } from "@/lib/pratiche/pratiche";
+import { registraCommissione } from "@/lib/affiliati/commissioni";
 
 /**
  * Il webhook di Stripe: qui un pagamento diventa una pratica.
@@ -76,6 +77,21 @@ export async function POST(req: NextRequest) {
   const tipo: TipoPratica = meta.tipo === "famiglia" ? "famiglia" : "singola";
   const prezzo = typeof sessione.amount_total === "number" ? Math.round(sessione.amount_total) / 100 : null;
   const ref = typeof meta.ref === "string" ? meta.ref : null;
+
+  /* IL CHECK: qui si segna solo la commissione del creator. La ricevuta (il
+     pass) la mette /api/check/pronto, l'unica che può scrivere il cookie sul
+     browser di chi torna dalla cassa. Nessuna pratica da creare. */
+  if (meta.prodotto === "check") {
+    if (ref) {
+      await registraCommissione({
+        codice: ref,
+        tipo: "check",
+        prezzoPagato: prezzo ?? 0,
+        riferimento: sessione.id,
+      });
+    }
+    return NextResponse.json({ ok: true, prodotto: "check" });
+  }
 
   const esito = await evadiPagamentoPratica(req, {
     verificaId,

@@ -601,10 +601,21 @@ export default function SchedaCheck() {
       <MuroCheck
         dati={muro}
         onPaga={() => {
-          /* Alla cassa, se c'è. Senza venditore si scende ai prezzi:
-             meglio una pagina che spiega che un bottone che non fa
-             niente. */
-          router.push(muro.cassa ?? "/#prezzi");
+          /* Alla cassa con una navigazione PIENA: la cassa vera è Stripe,
+             un sito esterno, e router.push (navigazione morbida) non ci
+             arriverebbe. L'origine (landing o web app) viaggia
+             nell'indirizzo, così al ritorno si torna dove si era. Senza
+             cassa si scende ai prezzi: meglio una pagina che spiega che un
+             bottone che non fa niente. */
+          if (muro.cassa) {
+            const sep = muro.cassa.includes("?") ? "&" : "?";
+            const origine =
+              typeof window !== "undefined" ? window.location.pathname : "/";
+            // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- la cassa è Stripe (esterno): router.push non seguirebbe il redirect fuori dal sito
+            window.location.assign(`${muro.cassa}${sep}origine=${encodeURIComponent(origine)}`);
+          } else {
+            router.push("/#prezzi");
+          }
         }}
         onRiscatta={(codice) => {
           /* Il codice dell'analisi gratis (da recensione): rifà il check

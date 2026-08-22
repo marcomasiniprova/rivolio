@@ -117,7 +117,12 @@ export async function GET(req: NextRequest) {
       const listino = listinoScontato(listinoDi(variante), { affiliato, scalaCheck });
       const prezzo = tipo === "famiglia" ? listino.famiglia : listino.singola;
 
-      const metadata: Record<string, string> = { verifica_id: verifica.id, tipo, variante };
+      const metadata: Record<string, string> = {
+        prodotto: "pratica",
+        verifica_id: verifica.id,
+        tipo,
+        variante,
+      };
       // Il filo che lega la vendita al creator: il webhook lo riavvolge per
       // segnare la commissione.
       if (affiliato) metadata.ref = affiliato.codice;

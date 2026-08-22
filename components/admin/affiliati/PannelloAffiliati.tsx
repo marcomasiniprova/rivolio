@@ -88,7 +88,7 @@ function ModuloCrea() {
             type="number"
             min={0}
             max={100}
-            defaultValue={30}
+            defaultValue={40}
             className="h-10 rounded-[10px] border border-bordo bg-nebbia px-3 text-[16px] text-inchiostro outline-none focus:border-verde/45 focus:bg-white sm:text-[14px]"
           />
         </label>

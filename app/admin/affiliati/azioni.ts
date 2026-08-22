@@ -31,7 +31,7 @@ export async function creaAffiliato(
   const codice = codiceAffiliatoValido(String(form.get("codice") ?? ""));
   const nome = String(form.get("nome") ?? "").trim();
   const sconto = Number(form.get("sconto") ?? 10);
-  const commissione = Number(form.get("commissione") ?? 30);
+  const commissione = Number(form.get("commissione") ?? 40);
 
   if (!codice) return { errore: "Codice non valido: da 3 a 20 lettere o numeri (es. MARCO)." };
   if (!nome) return { errore: "Manca il nome del creator." };

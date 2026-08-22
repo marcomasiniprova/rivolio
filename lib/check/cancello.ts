@@ -4,6 +4,7 @@ import { colonnaMancante } from "@/lib/supabase/colonne";
 import { SERVIZIO_ATTIVO, supabaseServizio } from "@/lib/supabase/servizio";
 import { conteggioCheck } from "./conteggio";
 import { CHECK_A_PAGAMENTO, postiRimasti, prezzoCheck } from "./ingresso";
+import { stripeAttivo } from "@/lib/stripe";
 import {
   COOKIE_PASS,
   COOKIE_PROVA,
@@ -254,10 +255,16 @@ export async function datiDelMuro(req: Request) {
   const { pagati } = await conteggioCheck();
   const prezzo = prezzoCheck(pagati);
   return {
-    /* Finché la cassa di prova esiste, il bottone del muro ci porta.
-       ⚠️ Il segreto NON viaggia mai qui dentro: l'indirizzo è nudo, e
-       una prova lo vieta per sempre (era il buco dell'11/08). */
-    cassa: cassaDiProvaAperta() ? "/cassa-prova" : null,
+    /* La cassa VERA è Stripe: /api/check/checkout apre la sessione e manda
+       a Stripe. Finché la chiave non è su Netlify si ripiega sulla cassa di
+       prova.
+       ⚠️ Nessun segreto viaggia mai qui dentro: l'indirizzo è nudo, e una
+       prova lo vieta per sempre (era il buco dell'11/08). */
+    cassa: stripeAttivo()
+      ? "/api/check/checkout"
+      : cassaDiProvaAperta()
+        ? "/cassa-prova"
+        : null,
     prezzoTesto: prezzo.prezzoTesto,
     prezzoPienoTesto: prezzo.prezzoPienoTesto,
     inLancio: prezzo.inLancio,

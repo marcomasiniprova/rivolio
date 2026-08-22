@@ -7,7 +7,7 @@ create table if not exists public.affiliati (
   id uuid primary key default gen_random_uuid(),
   codice text not null unique,
   nome text not null,
-  commissione_percento integer not null default 30 check (commissione_percento between 0 and 100),
+  commissione_percento integer not null default 40 check (commissione_percento between 0 and 100),
   sconto_percento integer not null default 10 check (sconto_percento between 0 and 90),
   attivo boolean not null default true,
   note text,
