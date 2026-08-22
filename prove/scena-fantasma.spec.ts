@@ -3,37 +3,35 @@ import { join } from "node:path";
 import { test, expect } from "@playwright/test";
 
 /**
- * LA PAGINA FANTASMA CHE NON DEVE PIÙ TORNARE (Valerio, 15/08 su ZZ777).
+ * LO SCANNER FANTASMA NON PUÒ PIÙ TORNARE (Valerio, 15/08 su ZZ777, chiuso
+ * per davvero il 22/08).
  *
- * La scena dell'analisi è un velo che si mostra AL MASSIMO UNA VOLTA per
- * pagina. Il difetto: arrivando dal check la scena è già andata all'hero,
- * quindi si salta, MA senza segnare la pagina come "vista". Poi si
- * dichiara un volo cancellato, la pagina si RICARICA per rileggere il
- * verdetto vero, e al secondo giro la scena ripartiva per un attimo prima
- * del verdetto: la "pagina fantasma".
+ * La storia: la pagina del verdetto rifaceva il "velo" dell'analisi a ogni
+ * arrivo che non venisse dal check dell'hero (link email, segnalibro). Per
+ * mesi si è provato a domarlo (segna la pagina come vista, non ripartire al
+ * ricaricamento, i pallini che non rimbalzano), ma il lampo tornava: aprendo
+ * la pratica dal link dell'email, per un attimo compariva la scena e poi
+ * spariva, proprio mentre uno voleva solo pagare.
  *
- * La regola che chiude il buco: ogni ramo che SALTA la scena deve prima
- * segnare la pagina come vista, così un ricaricamento non la fa ripartire.
- * Questa prova legge il sorgente e pretende che il `return` del salto sia
- * preceduto dal segno "vista".
+ * La chiusura definitiva: il velo è stato TOLTO del tutto. Il teatro
+ * dell'analisi vive già all'hero (SchedaCheck), dov'è al posto giusto; sulla
+ * pagina del verdetto non c'è più niente da far ripartire. Questa prova
+ * legge il sorgente e pretende che il velo non ci sia: se qualcuno lo
+ * rimette, il fantasma torna con lui.
  */
 
 const RADICE = join(__dirname, "..");
 const leggi = (p: string) => readFileSync(join(RADICE, p), "utf8");
 
-test.describe("La scena dell'analisi non riparte al ricaricamento", () => {
-  test("il ramo che salta la scena segna comunque la pagina come vista", () => {
+test.describe("Lo scanner fantasma non può più tornare", () => {
+  test("la pagina del verdetto non ha più il velo dell'analisi", () => {
     const testo = leggi("components/verifica/Risultato.tsx");
-    /* Il blocco che decide di NON mostrare la scena. Deve contenere il
-       segno "vista" PRIMA del return, se no il ricaricamento la fa
-       ripartire (era il bug di ZZ777). */
-    const i = testo.indexOf("if (dalCheck || fermo || giaVista || dati.avvisoCheckout)");
-    expect(i, "manca il ramo che salta la scena").toBeGreaterThan(0);
-    const blocco = testo.slice(i, i + 1200);
-    expect(
-      blocco,
-      "il ramo che salta la scena deve segnare la pagina come vista, se no si riapre la pagina fantasma",
-    ).toContain("sessionStorage.setItem(gia,");
+    // Niente stato della scansione, niente scena d'ingresso, niente segno in
+    // sessionStorage da far ripartire: il verdetto si mostra e basta.
+    expect(testo, "il velo non deve più esistere").not.toContain("setScansione");
+    expect(testo, "la scena d'ingresso non deve tornare").not.toContain("ScansioneIngresso");
+    expect(testo, "niente segno di pagina vista da far ripartire").not.toContain("rivolio-visto-");
+    expect(testo, "niente flag scan-fatto letto sul verdetto").not.toContain("rivolio-scan-fatto");
   });
 });
 

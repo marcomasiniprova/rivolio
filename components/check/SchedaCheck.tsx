@@ -441,7 +441,6 @@ export default function SchedaCheck() {
       }
 
       await sequenza;
-      sessionStorage.setItem("rivolio-scan-fatto", "1");
       router.push(destinazione);
     } catch {
       /* Rete giù o timeout, anche dopo la riprova automatica: messaggio

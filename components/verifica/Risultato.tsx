@@ -2,13 +2,7 @@
 
 import { useEffect, useId, useState, type FormEvent, type ReactNode } from "react";
 import Link from "next/link";
-import {
-  AnimatePresence,
-  animate,
-  motion,
-  useMotionValue,
-  useReducedMotion,
-} from "motion/react";
+import { animate, useMotionValue, useReducedMotion } from "motion/react";
 import { Anima } from "@/components/Anima";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +16,6 @@ import DichiaraCaso from "./DichiaraCaso";
 import DichiaraRinuncia from "./DichiaraRinuncia";
 import ChiHaOperato from "./ChiHaOperato";
 import CardCondivisione from "./CardCondivisione";
-import CartaImbarcoScan from "@/components/rivolio/CartaImbarcoScan";
 import LasciaRecensione from "@/components/rivolio/LasciaRecensione";
 
 /**
@@ -1090,77 +1083,19 @@ function NonIdoneo({ dati }: { dati: DatiVerifica }) {
 
 /* ============================================================ ingresso */
 
-/**
- * La scansione d'apertura: la carta del volo attraversata dal raggio,
- * poi il verdetto. Solo quando NON si arriva dal check della hero (lì
- * la scansione c'è già stata: due teatri di fila sono una presa in giro).
- * Il flag lo scrive chi lancia il check; qui si legge e si consuma.
- * Con prefers-reduced-motion il verdetto appare subito.
- */
-function ScansioneIngresso({ dati }: { dati: DatiVerifica }) {
-  /* La stessa carta d'imbarco dell'hero: qui il velo dura poco, quindi
-     la carta appare già a metà lettura (volo trovato, orari in corso). */
-  return (
-    <div aria-hidden="true" className="mx-auto max-w-md">
-      <CartaImbarcoScan volo={dati.volo} dataTesto={dataIt(dati.dataVolo)} passo={2} />
-    </div>
-  );
-}
-
 export default function Risultato({ dati }: { dati: DatiVerifica }) {
-  /* true = scansione in corso; parte spenta e si accende SOLO se serve
-     (arrivo diretto, niente flag dal check, movimento non ridotto). */
-  const [scansione, setScansione] = useState(false);
-  useEffect(() => {
-    const dalCheck = sessionStorage.getItem("rivolio-scan-fatto") === "1";
-    sessionStorage.removeItem("rivolio-scan-fatto");
-    const fermo = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    /* 🔴 LA SCENA DELL'ANALISI RIPARTIVA A OGNI RITORNO SULLA PAGINA.
-       Valerio, 12/08: «premo fai la pratica e mi rifà un'altra analisi,
-       poi mi riporta nella stessa pagina, è un loop continuo». Aveva
-       ragione: la cassa, quando qualcosa non torna, rimanda qui, e qui
-       ripartiva il teatro dei quindici secondi. Vedere due volte
-       l'analisi dello stesso volo non è un'animazione di troppo: fa
-       credere che il sito abbia buttato via quello che avevi fatto.
-       Adesso la scena si fa UNA volta per verifica e poi non più, e non
-       si fa mai quando si torna da un rimbalzo della cassa. */
-    const gia = `rivolio-visto-${dati.idPagina}`;
-    const giaVista = sessionStorage.getItem(gia) === "1";
-    if (dalCheck || fermo || giaVista || dati.avvisoCheckout) {
-      /* 🔴 LA PAGINA FANTASMA DI ZZ777 (Valerio, 15/08). Qui la scena non
-         si mostra (è già andata all'hero, o il movimento è ridotto, o si
-         torna da un rimbalzo). Prima si usciva SENZA segnare la pagina come
-         "vista": così, quando si dichiara un volo cancellato e la pagina si
-         RICARICA per rileggere il verdetto vero, al secondo giro `dalCheck`
-         è falso, `giaVista` è falso, e la scena RIPARTIVA per un attimo
-         prima del verdetto. Segnando "vista" anche quando si salta, il
-         ricaricamento non fa più ripartire niente: la scena è una sola per
-         pagina, sempre. */
-      sessionStorage.setItem(gia, "1");
-      return;
-    }
-    // la decisione vive SOLO nel browser (sessionStorage): partire spenti
-    // e accendersi dopo l'idratazione è il comportamento voluto, non un tic
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setScansione(true);
-    /* 🔴 IL SEGNO "GIÀ VISTA" SI SCRIVE QUANDO LA SCENA FINISCE, NON
-       QUANDO PARTE, e la differenza l'ho pagata subito: scrivendolo
-       all'inizio, in sviluppo React esegue gli effetti due volte (è il
-       suo modo di scovare i lavori lasciati a metà). Al primo giro la
-       scena partiva e il segno veniva scritto; il ripulisci annullava il
-       cronometro; al secondo giro il segno c'era già, quindi si usciva
-       subito **senza far ripartire il cronometro**. Il velo restava lì
-       per sempre, sopra il verdetto: esattamente la schermata che
-       Valerio mi ha mandato, ma stavolta l'avevo fatta io.
-       Scrivendolo alla fine, un giro interrotto non lascia traccia: la
-       scena riparte e si chiude come deve. */
-    const t = setTimeout(() => {
-      setScansione(false);
-      sessionStorage.setItem(gia, "1");
-    }, 1350);
-    return () => clearTimeout(t);
-  }, [dati.idPagina, dati.avvisoCheckout]);
+  /* 🔴 LO SCANNER FANTASMA, CHIUSO PER DAVVERO (Valerio, 22/08). Aprendo la
+     pratica non pagata dal link dell'email, per un lampo compariva la scena
+     dell'analisi e poi spariva: un teatro fuori posto, proprio mentre uno
+     voleva solo pagare. Il motivo: questa pagina rifaceva il "velo"
+     dell'analisi a ogni arrivo che NON venisse dal check dell'hero (link
+     email, segnalibro, condivisione). Ma il teatro vero l'analisi ce l'ha
+     già all'hero (SchedaCheck), dov'è al posto giusto: lo guardi mentre
+     succede. Qui era solo un doppione che lampeggiava durante il rimando.
+     Tolto del tutto: la pagina del verdetto mostra SUBITO il verdetto, da
+     qualunque parte tu arrivi. Nessuno stato, nessun sessionStorage, niente
+     da far ripartire per sbaglio: è la fine di una serie di rattoppi
+     (ZZ777, il velo che restava, i pallini che rimbalzavano). */
 
   // Un "idoneo" senza importo non deve mai vendere: si tratta da incerto.
   const verdetto =
@@ -1172,28 +1107,6 @@ export default function Risultato({ dati }: { dati: DatiVerifica }) {
       <Incerto dati={dati} />
     );
 
-  /* La scansione è un VELO sopra il verdetto, non un sostituto: il
-     verdetto resta montato da subito, così niente stato perso se uno
-     (o una prova) inizia a scrivere nel primo istante. */
-  return (
-    <div className="relative">
-      {verdetto}
-      <AnimatePresence>
-        {scansione && (
-          <motion.div
-            key="scansione"
-            className="absolute inset-0 z-20 bg-nebbia pt-10"
-            initial={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-          >
-            <p className="mb-5 text-center text-[13px] font-medium uppercase tracking-[0.14em] text-fumo">
-              {COPY.comeFunziona.verifica.titolo}
-            </p>
-            <ScansioneIngresso dati={dati} />
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
+  // Il verdetto e basta: niente velo sopra. Vedi la nota in cima al componente.
+  return verdetto;
 }
