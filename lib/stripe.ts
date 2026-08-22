@@ -103,6 +103,17 @@ export async function creaSessioneCheckout(opts: {
             product_data: {
               name: opts.nomeProdotto,
               ...(opts.descrizione ? { description: opts.descrizione } : {}),
+              /* MANAGED PAYMENTS: Stripe fa da merchant of record e gestisce
+                 l'IVA in 80+ paesi al posto nostro (è la ragione per cui non
+                 serve la partita IVA per l'IVA, il ruolo che Polar ha
+                 rifiutato). È acceso di default sull'account e ESIGE un tax
+                 code eleggibile su ogni prodotto, se no la cassa non si apre.
+                 Rivolio consegna un documento/informazione via internet a un
+                 consumatore: "Electronically Delivered Information Services,
+                 personal use". ⚠️ Il codice esatto va confermato dal
+                 commercialista: cambia solo l'aliquota IVA, non il
+                 funzionamento. */
+              tax_code: "txcd_10701411",
             },
           },
         },
