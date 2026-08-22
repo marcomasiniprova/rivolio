@@ -7,7 +7,13 @@
 > (Polar ha detto no; lo shadow è stato tolto). Lo stato vero e aggiornato
 > sta in `INIZIA-QUI.md`, non nei giri datati.
 
-**Aggiornato:** 2026-08-19 (giro #89: TIENITELI, il passaparola (il momento
+**Aggiornato:** 2026-08-22 (giro #90: LA CASSA VERA È STRIPE. Il check e la
+pratica passano da Stripe (Managed Payments = merchant of record, versa
+l'IVA al posto nostro: risolve la partita IVA che non c'è); il sistema
+affiliati (link + codice, cookie 60 giorni, sconto 10% al cliente,
+commissione 40% al creator, /admin/affiliati); i creator gratis a vita via
+account; la cassa finta spenta; e il giro dei prezzi a 16,90 finito, prove
+comprese. 1870 prove verdi) · giro #89: TIENITELI, il passaparola (il momento
 d'oro con recensione e invito a un amico sul Traguardo, il recupero del «no
 non replicato» spento fino alla cassa, e la misura in /admin/passaparola) ·
 giro #88: DECIDI, il posizionamento: il
@@ -85,6 +91,67 @@ campo email dell'Osservatorio non più schiacciato sul telefono, immagine
 social rifatta (era rimasta al prodotto viaggi).
 
 ## Dove siamo
+- **GIRO #90 (22/08): LA CASSA VERA È STRIPE, GLI AFFILIATI, E I CREATOR
+  GRATIS A VITA.** Valerio va al mercato con gli incassi veri: «parti dal
+  check a Stripe, poi al creator do il 40% a tutti, checkout perfetto senza
+  nessun buco, e controlla che tutto il sito dica i prezzi giusti». Fatto a
+  pezzi, ognuno verde prima del prossimo.
+  - 🟢 **STRIPE È LA CASSA, AL POSTO DELLA CASSA FINTA.** Pratica e check
+    passano da una sessione di pagamento Stripe (`lib/stripe.ts`,
+    `/api/pratiche/checkout`, `/api/check/checkout` + `/api/check/pronto`,
+    webhook `/api/stripe/webhook` con firma verificata). Il prezzo lo
+    scriviamo noi (`price_data` in linea), niente prodotti da creare a mano.
+    L'evasione del pagamento è in un posto solo (`lib/pratiche/evasione.ts`),
+    usato sia dal webhook sia dagli altri rami: il cancello «si vende solo un
+    idoneo non corretto a mano» vive lì, così non si può aggirare.
+  - 🔴 **L'ERRORE «Non ci sono riuscito» NON ERA LA CHIAVE.** Valerio giurava
+    di aver messo `STRIPE_SECRET_KEY` giusta su Netlify, e aveva ragione. Il
+    guasto vero l'ho letto nel registro `eventi` (ci scrive `tinGuasto`):
+    «the product tax code is missing. Product tax code is required for Managed
+    Payments.» Stripe Managed Payments (nato dall'acquisto di Lemon Squeezy)
+    fa il **merchant of record**: incassa lui e **versa l'IVA al posto nostro
+    in 80+ paesi**, che è esattamente la cosa che ci mancava senza partita
+    IVA. In cambio pretende un `tax_code` su ogni prodotto: messo
+    `txcd_10701411` (servizi informativi digitali, uso personale). Provato dal
+    vivo con curl: adesso il checkout rimanda davvero a `checkout.stripe.com`.
+    ⚠️ **Il codice fiscale del prodotto va confermato dal commercialista** (è
+    quello che decide l'aliquota che Stripe versa).
+  - 🟢 **IL SISTEMA AFFILIATI** (`lib/affiliati/*`, `/admin/affiliati`). Ogni
+    creator ha un codice: è insieme il link (`rivolio.it/?ref=CODICE`, il
+    proxy lo cattura in un cookie di **60 giorni**) e il codice sconto.
+    **Sconto 10% al cliente, commissione 40% al creator** (scelta di Valerio,
+    era 30). Lo sconto del bottone e quello della cassa vengono dalla STESSA
+    funzione (`listinoScontato`): non possono divergere. La commissione si
+    segna sul webhook, **idempotente** sull'id sessione Stripe (un webhook
+    doppio non la raddoppia). Il payout è **a mano dal pannello** (bonifico +
+    «Segna pagato»): coi primi creator è più semplice di Stripe Connect.
+  - 🟢 **I CREATOR GRATIS A VITA, VIA ACCOUNT** (scelta di Valerio: «meglio
+    con l'account, più facile»). Un flag `profili.creator` (migrazione sul DB
+    vero) che alza **solo l'admin** con la chiave di servizio: un utente non
+    se lo può dare da solo. Il muro del check e la cassa della pratica lo
+    leggono **lato server** (`utenteCreatore`), mai da una parola del
+    browser. Un creator fa check e pratiche senza pagare, per sempre. Nel
+    pannello: promuovi per email + elenco con «Togli il gratis». Tre guardie
+    statiche perché non diventi un aggiramento (flag solo dal DB, bypass solo
+    per un creator vero, pratica gratis solo DOPO il gate idoneo).
+  - 🟢 **IL GIRO DEI PREZZI A 16,90 FINITO, PROVE COMPRESE.** Il prezzo
+    pratica era passato a **16,90** (famiglia 29,90) ma il cambio aveva
+    lasciato indietro dei pezzi: sei file di prove asserivano ancora 14,90 /
+    585,10, più un paio di commenti. Ora il rendered è giusto ovunque (copy,
+    blog dinamico, economia) e le prove pure: landing, prezzi, verifica,
+    economia (netto 13,017), destinatario (le due etichette cronologia
+    `creator_gratis` e `pratica_da_credito` che mancavano), aeroporti (la
+    soglia dei fusi dedotti era del vecchio archivio). L'app mobile resta
+    fuori di proposito (scelta di Valerio: sweep «web»).
+  - Prove: **verify verde: 1870 prove, 6 saltate (le solite Supabase/sveglia
+    2027), 0 rosse**, tipi 0 errori, lint 0 errori. La cassa finta
+    (`CASSA_PROVA_SEGRETO`, `COLLAUDO_APERTO`) con Stripe acceso non è più
+    raggiungibile: si possono togliere da Netlify.
+  - ⚠️ **NON VERIFICATO dal vivo con una carta di prova vera:** da qui il
+    checkout rimanda a Stripe (curl), ma il giro completo pagamento →
+    webhook → pratica aperta va fatto una volta con una carta di test Stripe
+    dopo il deploy. E su Netlify serve `STRIPE_WEBHOOK_SECRET` (prima test,
+    poi live).
 - **GIRO #89 (19/08): TIENITELI, IL PASSAPAROLA. Il momento d'oro, il
   recupero del no non replicato, e la misura in admin.** Valerio: «Rivolio
   è una-tantum, il passaparola è il motore: probabilmente la casella più
