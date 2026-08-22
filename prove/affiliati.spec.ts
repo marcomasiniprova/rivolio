@@ -74,3 +74,41 @@ test.describe("Gli affiliati", () => {
     expect(p).toContain("COOKIE_REF");
   });
 });
+
+/**
+ * I CREATOR GRATIS A VITA. Il permesso è un flag sull'account, quindi la cosa
+ * che lo tiene sicuro è UNA: si legge dal server, mai dal browser. Se qualcuno
+ * un domani lo legge da un header o da un cookie, è un aggiramento aperto a
+ * tutti. Queste prove non si vedono cliccando: si vedono solo leggendo il
+ * codice, ed è lì che rientrerebbero dalla finestra.
+ */
+test.describe("I creator gratis a vita", () => {
+  test("il flag si legge dal database, non da una parola del browser", () => {
+    const c = leggi("lib/affiliati/creatore.ts");
+    // Dal profilo, con la chiave di servizio: è il solo modo per cui un utente
+    // non se lo può dare da solo.
+    expect(c).toContain("supabaseServizio");
+    expect(c).toContain('.select("creator")');
+    // Mai da un header o da un cookie: quello sì che sarebbe un aggiramento.
+    expect(c).not.toMatch(/headers\.get|cookies\.get|req\.headers/);
+  });
+
+  test("il muro del check salta SOLO per un creator vero (lato server)", () => {
+    const r = leggi("app/api/verifica/route.ts");
+    expect(r).toContain("utenteCreatore");
+    // La bypass sta dentro il ramo del muro: se non c'è un creator, il muro resta.
+    expect(r).toMatch(/if\s*\(!\(await utenteCreatore\(req\)\)\)/);
+  });
+
+  test("la pratica gratis del creator nasce DOPO il cancello, non prima", () => {
+    const r = leggi("app/api/pratiche/checkout/route.ts");
+    const gate = r.indexOf('conferma === "corretta"');
+    const creator = r.indexOf("utenteCreatore(req)");
+    expect(gate).toBeGreaterThan(-1);
+    expect(creator).toBeGreaterThan(-1);
+    // Un creator non apre una pratica su un verdetto non idoneo o corretto a mano.
+    expect(creator).toBeGreaterThan(gate);
+    // E la apre a prezzo zero, mai a un prezzo qualsiasi.
+    expect(r).toContain("prezzo_pagato: 0");
+  });
+});
