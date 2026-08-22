@@ -16,20 +16,20 @@ import {
  */
 
 test.describe("Economia", () => {
-  test("il conto di una pratica: dove finiscono i 14,90", () => {
+  test("il conto di una pratica: dove finiscono i 16,90", () => {
     const c = contoPratica();
-    // Polar: 5% + 0,50 su 14,90
-    expect(c.polar).toBeCloseTo(1.245, 3);
+    // Polar: 5% + 0,50 su 16,90
+    expect(c.polar).toBeCloseTo(1.345, 3);
     // garanzia stimata al 15% del prezzo
-    expect(c.garanzia).toBeCloseTo(2.235, 3);
+    expect(c.garanzia).toBeCloseTo(2.535, 3);
     // quel che resta
-    expect(c.netto).toBeCloseTo(11.417, 2);
+    expect(c.netto).toBeCloseTo(13.017, 2);
   });
 
   test("senza garanzia il netto è più alto; a metà reclami falliti crolla", () => {
-    expect(contoPratica(PREZZO_PRATICA, 0).netto).toBeCloseTo(13.652, 2);
+    expect(contoPratica(PREZZO_PRATICA, 0).netto).toBeCloseTo(15.552, 2);
     // a rimborso pieno si perde la commissione già pagata a Polar: netto negativo
-    expect(contoPratica(PREZZO_PRATICA, 1).netto).toBeCloseTo(-1.248, 2);
+    expect(contoPratica(PREZZO_PRATICA, 1).netto).toBeCloseTo(-1.348, 2);
   });
 
   test("il costo di un check è spiccioli (dati + un po' di OCR)", () => {
@@ -40,7 +40,7 @@ test.describe("Economia", () => {
   test("uno scenario a 10.000 check, 2% paga", () => {
     const s = scenario(10_000, 0.02);
     expect(s.paganti).toBe(200);
-    expect(s.ricavo).toBeCloseTo(2980, 0);
+    expect(s.ricavo).toBeCloseTo(3380, 0);
     // il netto resta ben sopra i tre quarti dell'incasso
     expect(s.nettoGiorno).toBeGreaterThan(s.ricavo * 0.7);
   });

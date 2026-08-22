@@ -1371,6 +1371,10 @@ export const COPY = {
         documento_saltato: "Nessun documento caricato, per scelta",
         cura: "Spese di pasti o hotel segnalate",
         email_invio: "Email di conferma dell'invio inviata",
+        // Le due pratiche che nascono senza un pagamento: la cronologia deve
+        // dirlo in italiano, non con la parola del database.
+        creator_gratis: "Pratica aperta gratis (account creator)",
+        pratica_da_credito: "Pratica aperta con un credito",
         // I nomi vecchi delle stesse tappe: le pratiche di prima li hanno
         // ancora scritti in cronologia e devono restare leggibili.
         email_t15: "Email col sollecito inviata",

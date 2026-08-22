@@ -98,10 +98,14 @@ test.describe("I fusi orari", () => {
   test("i fusi dedotti sono marcati come tali", () => {
     /* Non è pignoleria: un valore che abbiamo calcolato noi non ha lo
        stesso peso di uno che viene dalla fonte, e chi lo legge domani
-       deve poterlo sapere. */
+       deve poterlo sapere.
+       ⚠️ Dal passaggio a OurAirports (9.016 scali) il fuso lo porta la
+       fonte per quasi tutti: i dedotti sono una manciata, ed è giusto
+       così. Quello che conta non è quanti sono, ma che ognuno resti
+       MARCATO e abbia un fuso vero: un "dedotto" senza fuso sarebbe il
+       difetto che questa prova esiste per fermare. */
     const dedotti = Object.values(ELENCO).filter((a) => a.tzDedotto);
-    expect(dedotti.length).toBeGreaterThan(1000);
-    for (const a of dedotti.slice(0, 200)) expect(a.tz).toBeTruthy();
+    for (const a of dedotti) expect(a.tz).toBeTruthy();
   });
 
   test("ogni fuso è un fuso vero, non una stringa qualsiasi", () => {
