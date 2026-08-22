@@ -4,6 +4,7 @@ import { verificaVolo } from "@/lib/voli/verifica";
 import { inItaliano } from "@/lib/voli/aeroporti";
 import { CORS, ipDi, oltreIlLimiteCondiviso } from "@/lib/api/limite";
 import { CHECK_A_PAGAMENTO, CORTESIA_SU_INCERTO } from "@/lib/check/ingresso";
+import { utenteCreatore } from "@/lib/affiliati/creatore";
 import {
   analisiGiaPagata,
   creditoFinito,
@@ -102,8 +103,13 @@ export async function POST(req: Request) {
      si allarga scendendo, e un numero impossibile fa dubitare di tutti
      gli altri. */
   if (CHECK_A_PAGAMENTO && !pass && !buonoOk) {
-    traccia(req, { tipo: "check" }, { tipo: "muro" });
-    return rispostaMuro(req);
+    /* Un creator "gratis a vita" salta il muro: check illimitati, senza
+       pagare. Il flag si legge dal SERVER (utenteCreatore), mai dal browser,
+       e solo QUI davanti al muro: chi non è loggato non tocca il database. */
+    if (!(await utenteCreatore(req))) {
+      traccia(req, { tipo: "check" }, { tipo: "muro" });
+      return rispostaMuro(req);
+    }
   }
 
   if (typeof volo !== "string" || typeof data !== "string") {

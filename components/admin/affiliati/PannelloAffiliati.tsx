@@ -6,10 +6,13 @@ import { Bollo, euro } from "@/components/admin/Pezzi";
 import {
   cambiaStato,
   creaAffiliato,
+  promuoviCreator,
+  rimuoviCreator,
   segnaPagate,
   type EsitoAffiliati,
 } from "@/app/admin/affiliati/azioni";
 import type { RigaAffiliato } from "@/lib/affiliati/lettura";
+import type { CreatoreRiga } from "@/lib/affiliati/creatore";
 
 /** Il bottone che copia il link del creator, con la spunta di conferma. */
 function CopiaLink({ link }: { link: string }) {
@@ -108,15 +111,82 @@ function ModuloCrea() {
   );
 }
 
+/** Promuove un'email a creator gratis a vita (check e pratiche, per sempre). */
+function ModuloCreator({ creatori }: { creatori: CreatoreRiga[] | null }) {
+  const [esito, azione, inCorso] = useActionState<EsitoAffiliati, FormData>(promuoviCreator, {});
+  return (
+    <div className="rounded-[14px] border border-bordo bg-white p-4 sm:p-5">
+      <p className="text-[15px] font-medium text-inchiostro">Creator gratis a vita</p>
+      <p className="mt-1 text-[13px] text-fumo-2">
+        Un account promosso qui fa check e pratiche senza pagare, per sempre. È un permesso
+        sull&apos;account: da quel momento, appena entra con quell&apos;email, è tutto gratis. Diverso
+        dal codice sconto qui sopra, che serve a chi PORTA clienti.
+      </p>
+      <form action={azione} className="mt-4 flex flex-wrap items-end gap-3">
+        <label className="flex min-w-0 flex-1 flex-col gap-1 text-[12px] font-medium text-fumo">
+          Email del creator
+          <input
+            name="email"
+            type="email"
+            required
+            placeholder="marco@esempio.it"
+            className="h-10 rounded-[10px] border border-bordo bg-nebbia px-3 text-[16px] text-inchiostro outline-none focus:border-verde/45 focus:bg-white sm:text-[14px]"
+          />
+        </label>
+        <button
+          type="submit"
+          disabled={inCorso}
+          className="inline-flex h-10 items-center rounded-bottone bg-verde px-5 text-[14px] font-semibold text-white transition-colors hover:bg-verde-scuro disabled:opacity-60"
+        >
+          {inCorso ? "Promuovo..." : "Rendi gratis a vita"}
+        </button>
+      </form>
+      {esito.ok && <p className="mt-2 text-[13px] font-medium text-verde-scuro">{esito.ok}</p>}
+      {esito.errore && <p className="mt-2 text-[13px] font-medium text-red-700">{esito.errore}</p>}
+
+      {creatori === null ? (
+        <p className="mt-4 text-[13px] text-fumo-2">
+          L&apos;elenco non si è caricato: il database non ha risposto. Riprova fra poco.
+        </p>
+      ) : creatori.length === 0 ? (
+        <p className="mt-4 text-[13px] text-fumo-2">Ancora nessun account gratis a vita.</p>
+      ) : (
+        <ul className="mt-4 flex flex-col divide-y divide-bordo border-t border-bordo">
+          {creatori.map((c) => (
+            <li key={c.id} className="flex flex-wrap items-center gap-2 py-2.5">
+              <span className="min-w-0 break-all text-[13px] font-medium text-inchiostro">
+                {c.email}
+              </span>
+              {c.nickname && <span className="text-[12px] text-fumo-2">({c.nickname})</span>}
+              <form action={rimuoviCreator} className="ml-auto">
+                <input type="hidden" name="id" value={c.id} />
+                <button
+                  type="submit"
+                  className="rounded-[9px] border border-bordo bg-white px-3 py-1.5 text-[12px] font-medium text-fumo transition-colors hover:border-fumo-2"
+                >
+                  Togli il gratis
+                </button>
+              </form>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 export default function PannelloAffiliati({
   righe,
   base,
+  creatori,
 }: {
   righe: RigaAffiliato[];
   base: string;
+  creatori: CreatoreRiga[] | null;
 }) {
   return (
     <div className="flex flex-col gap-5">
+      <ModuloCreator creatori={creatori} />
       <ModuloCrea />
 
       {righe.length === 0 ? (

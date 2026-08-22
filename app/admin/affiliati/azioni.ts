@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { supabaseServer, utenteCollegato } from "@/lib/supabase/server";
 import { SERVIZIO_ATTIVO, supabaseServizio } from "@/lib/supabase/servizio";
 import { codiceAffiliatoValido } from "@/lib/affiliati/codice";
+import { promuoviCreatore, togliCreatore } from "@/lib/affiliati/creatore";
 
 /**
  * Le azioni del pannello affiliati. Come tutte le server action, ognuna
@@ -82,5 +83,36 @@ export async function cambiaStato(form: FormData): Promise<void> {
   const db = supabaseServizio();
   const { error } = await db.from("affiliati").update({ attivo }).eq("id", id);
   if (error) console.error("[affiliati] cambia stato fallito:", error.message);
+  revalidatePath("/admin/affiliati");
+}
+
+/* --------------------------------------------- creator gratis a vita */
+
+/**
+ * Promuove un'email a creator gratis a vita. Firma (prev, formData) per
+ * useActionState. Se l'account non esiste ancora lo crea (email già
+ * confermata: lo decide l'admin), così il giorno che entra è già gratis.
+ */
+export async function promuoviCreator(
+  _prev: EsitoAffiliati,
+  form: FormData,
+): Promise<EsitoAffiliati> {
+  if (!(await soloAdmin())) return { errore: "Non sei autorizzato." };
+  if (!SERVIZIO_ATTIVO) return { errore: "SUPABASE_SECRET_KEY assente." };
+
+  const email = String(form.get("email") ?? "").trim();
+  if (!email) return { errore: "Metti l'email del creator." };
+
+  const esito = await promuoviCreatore(email);
+  if (!esito.ok) return { errore: esito.motivo ?? "Non riuscito." };
+  revalidatePath("/admin/affiliati");
+  return { ok: `${email} ora ha tutto gratis a vita.` };
+}
+
+/** Toglie il gratis a vita a un account. Native form. */
+export async function rimuoviCreator(form: FormData): Promise<void> {
+  if (!(await soloAdmin())) return;
+  const id = String(form.get("id") ?? "");
+  if (id) await togliCreatore(id);
   revalidatePath("/admin/affiliati");
 }

@@ -1,6 +1,7 @@
 import { soloAdmin } from "@/lib/admin/guardia";
 import { Avviso, Kpi, euro } from "@/components/admin/Pezzi";
 import { leggiAffiliati } from "@/lib/affiliati/lettura";
+import { leggiCreatori } from "@/lib/affiliati/creatore";
 import { casa } from "@/lib/sito";
 import PannelloAffiliati from "@/components/admin/affiliati/PannelloAffiliati";
 
@@ -32,6 +33,11 @@ export default async function PaginaAffiliati() {
   const daPagare = Math.round(righe.reduce((t, r) => t + r.daPagare, 0) * 100) / 100;
   const maturato = Math.round(righe.reduce((t, r) => t + r.maturato, 0) * 100) / 100;
 
+  /* I creator gratis a vita: lettura a parte (l'email sta nell'auth, non nei
+     profili). Se il database non risponde torna null: il pannello lo dice, non
+     mostra una lista vuota che sembrerebbe "nessuno". */
+  const creatori = await leggiCreatori();
+
   return (
     <div className="flex flex-col gap-5">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -50,7 +56,7 @@ export default async function PaginaAffiliati() {
         />
       </div>
 
-      <PannelloAffiliati righe={righe} base={casa()} />
+      <PannelloAffiliati righe={righe} base={casa()} creatori={creatori} />
     </div>
   );
 }

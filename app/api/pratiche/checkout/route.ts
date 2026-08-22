@@ -7,7 +7,9 @@ import { COOKIE_PREZZO, TEST_DUE_PREZZI, listinoDi, varianteValida } from "@/lib
 import { creaSessioneCheckout, stripeAttivo } from "@/lib/stripe";
 import { affiliatoDaCodice } from "@/lib/affiliati/affiliati";
 import { COOKIE_REF } from "@/lib/affiliati/codice";
+import { utenteCreatore } from "@/lib/affiliati/creatore";
 import { listinoScontato } from "@/lib/pratiche/prezzo";
+import { creaPratica, registraEvento, transizionePratica } from "@/lib/pratiche/pratiche";
 import { traccia } from "@/lib/eventi/registra";
 import { SERVIZIO_ATTIVO, supabaseServizio } from "@/lib/supabase/servizio";
 
@@ -85,6 +87,35 @@ export async function GET(req: NextRequest) {
        niente, mai. */
     if (verifica.esito !== "idoneo" || verifica.conferma === "corretta") {
       return paginaRisultato();
+    }
+
+    /* CREATOR GRATIS A VITA: se chi apre la pratica è un account creator, la
+       pratica nasce gratis (prezzo 0) sotto il SUO account, senza cassa. Il
+       flag è server-side (utenteCreatore legge la sessione, mai una parola
+       del browser). Sta PRIMA del recesso: una pratica gratis non è un
+       acquisto, e il recesso dei 14 giorni è una tutela sugli acquisti. */
+    const creatore = await utenteCreatore(req);
+    if (creatore) {
+      const creata = await creaPratica({
+        verificaId: verifica.id,
+        email: creatore.email,
+        tipo,
+        passeggeri: [],
+      });
+      if (!creata.ok) return paginaRisultato("errore");
+      // Già aperta (doppio clic, corsa dei webhook): si va a quella, non se ne fa un'altra.
+      if (!creata.giaEsisteva) {
+        await transizionePratica(creata.pratica.id, "pagata", "Pratica gratuita: account creator.", {
+          prezzo_pagato: 0,
+        });
+        await registraEvento(
+          creata.pratica.id,
+          "creator_gratis",
+          "Aperta gratis da un account creator.",
+        );
+      }
+      traccia(req, { tipo: "pratica", extra: { tipo, creator: true } });
+      return NextResponse.redirect(versoCasa(`/pratica/${creata.pratica.id}`, req));
     }
 
     /* #21: senza la spunta di rinuncia al recesso (art. 59 Cod. Consumo),
