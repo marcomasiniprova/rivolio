@@ -33,7 +33,7 @@ import { SERVIZIO_ATTIVO, supabaseServizio } from "@/lib/supabase/servizio";
  *   e non manda nessuna email, perché non c'è niente da sbloccare.
  * - **«Correggi»** è l'unica azione che pesa, ed è quella che serve: da
  *   quel momento su quel caso non si vende più (il cancello vive nella
- *   rotta della cassa e nel webhook di Polar), e il caso finisce nei log
+ *   rotta della cassa e nel webhook di Stripe), e il caso finisce nei log
  *   come materiale nuovo per il golden set del motore.
  */
 export const dynamic = "force-dynamic";

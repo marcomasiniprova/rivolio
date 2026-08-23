@@ -125,7 +125,7 @@ test.describe("La pagina del risultato (id demo, senza chiavi)", () => {
     expect(await page.locator('input[type="email"]').count()).toBe(0);
   });
 
-  test("IDONEO demo: il bottone d'acquisto torna alla pagina con l'avviso, non a Polar", async ({
+  test("IDONEO demo: il bottone d'acquisto torna alla pagina con l'avviso, non alla cassa", async ({
     page,
   }) => {
     await page.goto(urlDemo(idoneo250.voloIata));
@@ -142,7 +142,7 @@ test.describe("La pagina del risultato (id demo, senza chiavi)", () => {
     await page.goto(urlDemo(idoneo250.voloIata));
     await expect(page.getByText(COPY.risultato.idoneo.recesso.etichetta).first()).toBeVisible();
     await page.getByRole("link", { name: CTA_ACQUISTO }).first().click();
-    // il richiamo compare e la pagina resta questa: nessun rimando a Polar
+    // il richiamo compare e la pagina resta questa: nessun rimando alla cassa
     await expect(page.getByText(COPY.risultato.idoneo.recesso.blocco).first()).toBeVisible();
     await expect(page).not.toHaveURL(/checkout=/);
   });

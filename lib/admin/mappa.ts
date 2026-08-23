@@ -252,11 +252,11 @@ export const NODI: Nodo[] = [
   {
     id: "venditore",
     zona: "soldi",
-    titolo: "Il venditore",
-    riga: "MANCA. È l'unico tappo fra qui e il primo euro.",
+    titolo: "La cassa (Stripe)",
+    riga: "Fatta: la cassa è Stripe. Manca solo l'ultima chiave su Netlify.",
     dentro:
-      "Serve qualcuno che incassi al posto nostro, perché senza partita IVA non si può emettere fattura: un «merchant of record» compra da noi e rivende al cliente, occupandosi lui di IVA e documenti. Polar ha detto no col controllo automatico (categoria, non forma). Dodo ha detto sì per iscritto ma ha 3,0 su 5 di recensioni e segnalazioni di fondi bloccati. È la decisione aperta più importante di tutto il progetto.",
-    stato: "manca",
+      "La cassa è Stripe. Con Managed Payments Stripe fa da «merchant of record»: incassa al posto nostro e versa lui l'IVA in 80+ paesi, che è la ragione per cui funziona senza partita IVA. Il prezzo lo scriviamo noi in linea, niente prodotti da creare a mano. Resta da mettere STRIPE_WEBHOOK_SECRET su Netlify (prima test, poi live) e fare un pagamento di prova col webhook, per chiudere il giro pagamento → pratica.",
+    stato: "fatto",
     icona: "cassa",
     x: 126,
     y: 44,

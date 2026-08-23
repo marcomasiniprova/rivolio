@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { casa } from "@/lib/sito";
 import { CHECK_A_PAGAMENTO, prezzoCheck } from "@/lib/check/ingresso";
-import { cassaDiProvaAperta, passUsabile } from "@/lib/check/cancello";
+import { passUsabile } from "@/lib/check/cancello";
 import { conteggioCheck } from "@/lib/check/conteggio";
 import { creaSessioneCheckout, stripeAttivo } from "@/lib/stripe";
 import { affiliatoDaCodice } from "@/lib/affiliati/affiliati";
@@ -58,6 +58,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(url, 303);
   }
 
-  if (cassaDiProvaAperta()) return NextResponse.redirect(`${casa()}/cassa-prova`);
+  /* Stripe è l'unica cassa: se la chiave manca (misconfig su Netlify) si
+     torna ai prezzi, senza vicoli ciechi e senza casse finte. */
   return aCasa("#prezzi");
 }

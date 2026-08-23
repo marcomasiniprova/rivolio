@@ -1005,12 +1005,12 @@ export const COPY = {
       cta: "Prepara la pratica a {prezzo}",
       ctaFamiglia: "Eravate in più sullo stesso volo? Fino a 5 passeggeri a {prezzoFamiglia}",
       garanziaBreve: "Se non ottieni la compensazione, la prossima pratica è su di noi.",
-      /** Onestà quando i link Polar non sono configurati o il caso è demo. */
+      /** Onestà quando la cassa non è configurata o il caso è demo. */
       checkoutNonAttivo:
         "Il pagamento non è ancora attivo. Lascia l'email qui sopra: ti scriviamo appena lo è.",
       checkoutDemo: "Questo è un esempio dimostrativo: il pagamento è spento.",
       /**
-       * #21: la rinuncia al recesso (art. 59 Cod. Consumo) prima di Polar.
+       * #21: la rinuncia al recesso (art. 59 Cod. Consumo) prima della cassa.
        * L'etichetta È il testo registrato nel database: unica fonte,
        * lib/pratiche/recesso.ts. Se cambia lì, cambia anche qui.
        */

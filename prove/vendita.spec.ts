@@ -61,9 +61,8 @@ test.describe("Il giro che porta ai soldi", () => {
        sbagliato. */
     for (const file of [
       "app/api/pratiche/checkout/route.ts",
-      "app/api/polar/webhook/route.ts",
       // La cassa Stripe evade il pagamento da qui: il cancello vive nella
-      // funzione condivisa, e la stessa regola vale.
+      // funzione condivisa (chiamata dal webhook Stripe), e la stessa regola vale.
       "lib/pratiche/evasione.ts",
     ]) {
       const testo = readFileSync(join(RADICE, file), "utf8");

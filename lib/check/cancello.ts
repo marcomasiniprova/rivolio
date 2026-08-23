@@ -5,13 +5,7 @@ import { SERVIZIO_ATTIVO, supabaseServizio } from "@/lib/supabase/servizio";
 import { conteggioCheck } from "./conteggio";
 import { CHECK_A_PAGAMENTO, postiRimasti, prezzoCheck } from "./ingresso";
 import { stripeAttivo } from "@/lib/stripe";
-import {
-  COOKIE_PASS,
-  COOKIE_PROVA,
-  chiaveDiProvaValida,
-  leggiPass,
-  type Pass,
-} from "./pass";
+import { COOKIE_PASS, leggiPass, type Pass } from "./pass";
 
 /**
  * IL CANCELLO, in un posto solo.
@@ -69,70 +63,6 @@ export async function passUsabile(req: Request): Promise<Pass | null> {
   return (await creditoFinito(pass)) ? null : pass;
 }
 
-/**
- * LA CASSA DI PROVA È APERTA (decisione di Valerio, 11/08).
- *
- * Finché non esiste un venditore vero, il bottone del muro porta alla
- * cassa di prova **per chiunque**. Il motivo è pratico: Valerio deve
- * poter percorrere il giro da qualsiasi telefono senza ricordarsi di
- * armare quel browser, e con la cassa chiusa a chiave si ritrovava
- * davanti a un bottone che lo mandava ai prezzi.
- *
- * ⚠️ SÌ, VUOL DIRE CHE CHI LA TROVA SBLOCCA UN'ANALISI GRATIS. Oggi non
- * c'è niente da rubare: non incassiamo un euro, e l'unico costo è una
- * chiamata al fornitore, che è protetta dal tetto per IP.
- *
- * 🔴 SI SPEGNE TOGLIENDO `CASSA_PROVA_SEGRETO` DA NETLIFY, ed è la prima
- * cosa da fare il giorno del venditore vero: senza quella variabile la
- * pagina e la rotta smettono di esistere (404) e il muro torna a
- * mandare ai prezzi. È scritto anche in LANCIO.md e in ARRETRATI.
- *
- * Il cookie del collaudatore resta in piedi e non fa male a nessuno: il
- * giorno che la cassa va richiusa a chiave basta rimettere questa
- * funzione a guardare il cookie invece della sola variabile.
- */
-export function cassaDiProvaAperta(): boolean {
-  /* Col portone aperto la cassa c'e' anche senza parola segreta: e'
-     esattamente il punto della richiesta di Valerio, cioe' non dover
-     piu' prendere nessuna chiave per provare il prodotto. */
-  return collaudoAperto() || Boolean(process.env.CASSA_PROVA_SEGRETO);
-}
-
-/**
- * IL PORTONE APERTO (decisione di Valerio, 12/08: «adesso nessuno
- * visiterà Rivolio, sono solo io: fai tutto libero per me, poi quando
- * lancio togliamo e barriamo come di default»).
- *
- * Ha ragione sul fatto suo: oggi il sito non lo conosce nessuno, e ogni
- * chiave da prendere è un giro in più fra lui e la cosa che vuole
- * provare. Con `COLLAUDO_APERTO=1` su Netlify chiunque passi di qui è
- * trattato come il collaudatore: le due casse di prova si aprono, i voli
- * dimostrativi camminano fino in fondo, e non serve più nessun cookie.
- *
- * ⚠️ NASCE SPENTO E SI SPEGNE TOGLIENDO UNA RIGA. È la parte che conta:
- * il giorno del lancio non c'è niente da ricordarsi di rimettere a
- * posto nel codice, si cancella la variabile su Netlify e tutto torna
- * chiuso a chiave nello stesso istante. Se la variabile non c'è (per
- * esempio in una copia del sito, o in locale) il portone è chiuso: è la
- * direzione prudente per dimenticanza, non il contrario.
- *
- * ⚠️ COSA NON APRE, mai, nemmeno con la variabile accesa: il retrobottega
- * (`/admin` continua a volere il ruolo admin) e il bollo sui voli
- * dimostrativi. Il primo perché lì ci sono gli incassi e i dati; il
- * secondo perché un volo inventato deve restare riconoscibile a
- * chiunque lo guardi, e quella è la regola 3 del progetto.
- */
-export function collaudoAperto(): boolean {
-  return process.env.COLLAUDO_APERTO === "1";
-}
-
-/** Vero se questo browser porta la chiave del collaudatore. */
-export function inCollaudo(req: Request): boolean {
-  if (collaudoAperto()) return true;
-  const segreto = process.env.CASSA_PROVA_SEGRETO ?? "";
-  if (!segreto) return false;
-  return chiaveDiProvaValida(cookieDi(req, COOKIE_PROVA), segreto);
-}
 
 /**
  * IL REGISTRO: quante analisi ha già consumato questo ordine.
@@ -255,16 +185,12 @@ export async function datiDelMuro(req: Request) {
   const { pagati } = await conteggioCheck();
   const prezzo = prezzoCheck(pagati);
   return {
-    /* La cassa VERA è Stripe: /api/check/checkout apre la sessione e manda
-       a Stripe. Finché la chiave non è su Netlify si ripiega sulla cassa di
-       prova.
+    /* La cassa è Stripe: /api/check/checkout apre la sessione e manda a
+       Stripe. Se la chiave manca, il muro non ha dove mandare e il bottone
+       porta ai prezzi (lo decide il client sul null).
        ⚠️ Nessun segreto viaggia mai qui dentro: l'indirizzo è nudo, e una
        prova lo vieta per sempre (era il buco dell'11/08). */
-    cassa: stripeAttivo()
-      ? "/api/check/checkout"
-      : cassaDiProvaAperta()
-        ? "/cassa-prova"
-        : null,
+    cassa: stripeAttivo() ? "/api/check/checkout" : null,
     prezzoTesto: prezzo.prezzoTesto,
     prezzoPienoTesto: prezzo.prezzoPienoTesto,
     inLancio: prezzo.inLancio,

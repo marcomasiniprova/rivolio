@@ -6,11 +6,9 @@
  * analisi è un numero piccolo per chi paga e grosso per chi incassa.
  *
  * ⚠️ NASCE SPENTO. Senza `NEXT_PUBLIC_CHECK_PREZZO_ATTIVO=1` fra le
- * variabili, tutto
- * si comporta come oggi: check libero, nessun muro, nessun cambiamento
- * per nessuno. È di proposito: il venditore che incassa non c'è ancora
- * (Polar ha detto no, vedi PAGAMENTI.md), e un muro davanti a una cassa
- * chiusa sarebbe solo una porta sbarrata.
+ * variabili, il check è libero: nessun muro, nessun cambiamento per nessuno.
+ * L'interruttore resta apposta, come freno d'emergenza: la cassa è Stripe e
+ * si accende quando Valerio vuole, senza toccare il codice.
  *
  * IL PREZZO DI LANCIO, e perché è scritto così.
  * "1,99 adesso, poi 4,99" è una promessa sul FUTURO, ed è lecita. Il

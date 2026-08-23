@@ -33,40 +33,6 @@ const SEGRETO_SVILUPPO = "rivolio-sviluppo-non-usare-in-produzione";
 /** Il cookie che porta la ricevuta. */
 export const COOKIE_PASS = "rivolio_check";
 
-/**
- * Il cookie che dice "questo browser è quello di Valerio".
- *
- * Serve finché la cassa vera non esiste: la cassa di prova emette
- * ricevute valide, quindi non può stare aperta. Prima il muro spediva
- * l'indirizzo della cassa dentro la risposta del server, segreto
- * compreso: chiunque premesse il bottone si sbloccava l'analisi gratis
- * (visto l'11/08 con una chiamata diretta). Adesso l'indirizzo della
- * cassa lo riceve solo chi ha questa chiave nel browser.
- *
- * Nel cookie NON c'è il segreto in chiaro ma la sua firma: se qualcuno
- * legge il cookie non impara la parola per fabbricarsene un altro.
- */
-export const COOKIE_PROVA = "rivolio_prova";
-
-/** La firma che vale come chiave del collaudatore. null se non si firma. */
-export function segnaturaProva(segreto: string): string | null {
-  const k = chiave();
-  if (!k || !segreto) return null;
-  return firma(`prova:${segreto}`, k);
-}
-
-/** Vero se il cookie ricevuto è la chiave giusta, confrontata a tempo costante. */
-export function chiaveDiProvaValida(
-  valore: string | null | undefined,
-  segreto: string,
-): boolean {
-  const attesa = segnaturaProva(segreto);
-  if (!attesa || !valore) return false;
-  const a = Buffer.from(attesa);
-  const b = Buffer.from(valore);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
-
 const DURATA_MS = GIORNI_DEL_PASS * 24 * 60 * 60 * 1000;
 
 function chiave(): string | null {

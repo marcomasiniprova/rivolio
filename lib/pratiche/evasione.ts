@@ -17,8 +17,7 @@ import { registraCommissione } from "@/lib/affiliati/commissioni";
  * DA UN PAGAMENTO A UNA PRATICA: la parte che conta, in un posto solo.
  *
  * Il webhook di Stripe la chiama dopo aver verificato la firma ed estratto
- * i dati dell'ordine. Qui succede tutto il resto, identico a come lo faceva
- * il webhook di Polar (che resta dov'è, dismesso ma non toccato):
+ * i dati dell'ordine. Qui succede tutto il resto:
  *
  *   cancello anti-giallo → creaPratica → stato `pagata` → email T+0 con
  *   link magico per entrare senza password.
@@ -165,14 +164,14 @@ export async function evadiPagamentoPratica(
     }
   }
 
-  /* La colonna si chiama ancora `polar_ordine` (era il primo venditore): la
-     riusiamo per il riferimento del pagamento Stripe, invece di una
-     migrazione solo per il nome. */
+  /* Il riferimento del pagamento (oggi la sessione Stripe) va in
+     `ordine_pagamento`. La colonna si chiamava `polar_ordine` fino al 22/08:
+     rinominata col passaggio a Stripe (Polar estinto). */
   const passaggio = await transizionePratica(
     pratica.id,
     "pagata",
     `Pagamento ricevuto via ${venditore}${ordineId ? ` (ordine ${ordineId})` : ""}.`,
-    { prezzo_pagato: prezzo, polar_ordine: ordineId },
+    { prezzo_pagato: prezzo, ordine_pagamento: ordineId },
   );
   if (!passaggio.ok) {
     console.error(`${eti} transizione a pagata fallita, riproverà:`, passaggio.motivo);

@@ -13,13 +13,12 @@
  * è 50 e 50 e la fa una moneta, quindi quanti hanno VISTO i due prezzi è
  * lo stesso numero: basta contare le vendite. Se la variante B vende più
  * della metà di A, ha già vinto (a 24,90 ne bastano 60 per pareggiare 100
- * vendite da 14,90). Il prodotto Polar comprato dice da solo in che
+ * vendite da 14,90). Il prodotto comprato dice da solo in che
  * variante era il cliente: nessuna migrazione, nessuna colonna in più.
  *
- * ⚠️ Serve una cosa a Valerio: su Polar vanno creati QUATTRO prodotti, non
- * due, e i loro quattro link vanno nelle variabili qui sotto. Senza i link
- * della variante B, il sito serve a tutti la variante A e il test non parte
- * (nessun errore: si degrada al prezzo di sempre).
+ * ⚠️ Con Stripe il prezzo lo scriviamo noi in linea (price_data): non ci
+ * sono prodotti da creare a mano da nessuna parte, e la variante A/B si
+ * decide qui nel codice. Il test resta comunque spento (vedi sotto).
  */
 
 /**

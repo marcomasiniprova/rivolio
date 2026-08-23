@@ -86,11 +86,3 @@ test.describe("La pagina del verdetto sa chi sta guardando", () => {
     expect(testo).toContain("await utenteCollegato()");
   });
 });
-
-test.describe("La cassa di prova usa la stessa porta", () => {
-  test("non chiama più il link di accesso a scatola chiusa", () => {
-    const testo = leggi("app/api/pratiche/prova/route.ts");
-    expect(testo).toContain("ingressoDopoPagamento");
-    expect(testo).not.toContain("await linkDiIngresso(");
-  });
-});

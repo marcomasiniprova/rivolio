@@ -41,7 +41,7 @@ import {
  *   T+56 dall'invio → segnalazione all'ente nazionale (+ stato `enac`)
  *   T+90 dall'invio → com'è andata + garanzia
  *
- * ⚠️ IL BENVENUTO (T+0) HA LA PRECEDENZA. Lo manda il webhook di Polar
+ * ⚠️ IL BENVENUTO (T+0) HA LA PRECEDENZA. Lo manda il webhook di Stripe
  * appena si paga; ma se in quel momento Resend è giù o il webhook viene
  * ucciso a metà dai 10 secondi di Netlify, la pratica resta pagata SENZA
  * il link magico per entrare. Senza quel link la persona non trova la
@@ -180,7 +180,7 @@ async function mandaPasso(pr: PraticaConVolo, passo: Passo): Promise<boolean> {
 /**
  * 🔴 RECUPERO DEL BENVENUTO (T+0), audit 14/08.
  *
- * Il webhook di Polar manda il benvenuto (`praticaPronta`) e scrive
+ * Il webhook di Stripe manda il benvenuto (`praticaPronta`) e scrive
  * l'evento `email_t0` SOLO se è partito. Se in quel momento Resend è giù
  * o il webhook viene ucciso a metà, la pratica resta pagata senza il
  * link magico per entrare. Qui il cron lo rimanda: ogni pratica pagata a

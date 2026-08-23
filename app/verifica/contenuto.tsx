@@ -4,7 +4,7 @@ import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { cookies, headers } from "next/headers";
 import Risultato, { type DatiVerifica } from "@/components/verifica/Risultato";
-import { cassaDiProvaAperta, inCollaudo, passDi } from "@/lib/check/cancello";
+import { passDi } from "@/lib/check/cancello";
 import { CHECK_A_PAGAMENTO, prezzoPagatoPerIlCheck, scontoDaCheck } from "@/lib/check/ingresso";
 import { COPY } from "@/lib/copy";
 import { listinoCorrente } from "@/lib/prezzi-server";
@@ -54,17 +54,12 @@ function avvisoCheckoutDa(grezzo: string | string[] | undefined): DatiVerifica["
 }
 
 /**
- * C'è un venditore vero? Se sì, i bottoni d'acquisto si accendono. Stripe li
- * accende tutti e due (crea la sessione al volo, senza un link per prodotto);
- * il vecchio Polar solo dove il link è configurato. Il client non tocca mai
- * gli env: legge un sì/no.
+ * C'è un venditore vero? Se sì, i bottoni d'acquisto si accendono. La cassa è
+ * Stripe, che li accende tutti e due (crea la sessione al volo, senza un link
+ * per prodotto). Il client non tocca mai gli env: legge un sì/no.
  */
 function checkoutConfigurato() {
-  if (stripeAttivo()) return { singola: true, famiglia: true };
-  return {
-    singola: Boolean(process.env.POLAR_CHECKOUT_PRATICA),
-    famiglia: Boolean(process.env.POLAR_CHECKOUT_FAMIGLIA),
-  };
+  return stripeAttivo() ? { singola: true, famiglia: true } : { singola: false, famiglia: false };
 }
 
 /* --------------------------------------------------------- la cornice */
@@ -166,7 +161,6 @@ async function datiDemo(
         ? scadenzaStimata(fatto.dataLocale, fatto.vettoreOperativo)
         : null,
     checkout: checkoutConfigurato(),
-    cassaProva: cassaDiProvaAperta(),
     // I voli dimostrativi non usano il credito: sono esempi, non pratiche vere.
     credito: { singola: false, famiglia: false },
     avvisoCheckout,
@@ -327,7 +321,6 @@ export async function contenutoVerifica(
     casoDichiarato: riga.caso_dichiarato ?? null,
     motivo: riga.motivo,
     demo: riga.voli?.fonte === "demo",
-    collaudo: inCollaudo(await richiesta()),
     inAttesa: riga.conferma === "in_attesa",
     corretto: riga.conferma === "corretta",
     emailGiaData: Boolean(riga.email),
@@ -340,7 +333,6 @@ export async function contenutoVerifica(
         ? scadenzaStimata(riga.data_locale, riga.voli?.vettore_operativo ?? riga.volo_iata)
         : null,
     checkout: cassePronte,
-    cassaProva: cassaDiProvaAperta(),
     credito,
     avvisoCheckout,
   };

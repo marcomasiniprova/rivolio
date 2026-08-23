@@ -118,22 +118,22 @@ function stato(): Voce[] {
       ceSta: process.env.NEXT_PUBLIC_CHECK_PREZZO_ATTIVO === "1",
     },
     {
-      nome: "CASSA_PROVA_SEGRETO",
+      nome: "STRIPE_SECRET_KEY",
       serve:
-        "Tiene accesa la cassa FINTA, quella che non incassa. Non è più un segreto: adesso è solo un interruttore, basta che ci sia un valore qualsiasi.",
+        "La chiave della cassa. Con questa il check e la pratica si pagano davvero con Stripe. In prova comincia con sk_test_, dal vivo con sk_live_.",
       seManca:
-        "La cassa finta sparisce (404) e il bottone del muro porta ai prezzi. 🔴 È la prima cosa da togliere il giorno del venditore vero.",
-      peso: "facoltativa",
-      ceSta: c(process.env.CASSA_PROVA_SEGRETO),
+        "🔴 Niente cassa: il muro del check porta ai prezzi e il bottone della pratica dice «pagamento non attivo». Nessuno può pagare.",
+      peso: "obbligatoria",
+      ceSta: c(process.env.STRIPE_SECRET_KEY),
     },
     {
-      nome: "COLLAUDO_APERTO",
+      nome: "STRIPE_WEBHOOK_SECRET",
       serve:
-        'Il portone del collaudo. Vale "1" per far entrare CHIUNQUE nelle due casse finte e far camminare i voli dimostrativi (ZZ*) fino in fondo al percorso, senza nessuna chiave da prendere. Serve a te, adesso, per provare il prodotto da qualsiasi telefono.',
+        "La firma con cui Stripe ci avvisa che un pagamento è andato a buon fine (whsec_...). È come Stripe ci dice «questo ha pagato davvero, apri la pratica».",
       seManca:
-        "Torna tutto chiuso: le casse finte vogliono il cookie del collaudatore e i voli ZZ si fermano al verdetto. 🔴 È la riga da cancellare il giorno del lancio, insieme a CASSA_PROVA_SEGRETO. Il retrobottega NON si apre mai, nemmeno con questa accesa: /admin vuole comunque il ruolo admin.",
-      peso: "facoltativa",
-      ceSta: process.env.COLLAUDO_APERTO === "1",
+        "🔴 Il cliente paga ma la sua pratica non nasce da sola: rifiutiamo l'avviso di Stripe perché non riusciamo a verificarne la firma.",
+      peso: "obbligatoria",
+      ceSta: c(process.env.STRIPE_WEBHOOK_SECRET),
     },
     {
       nome: "TELEGRAM_BOT_TOKEN",

@@ -21,8 +21,8 @@ export const metadata: Metadata = {
  *
  * ⚠️ COSA QUESTA PAGINA NON FA, ed è una scelta, non una mancanza:
  * non prepara nessun atto, non dice "vinci di sicuro" e non fa da
- * avvocato. Rivolio non è un servizio legale e non lo diventa: Polar
- * vieta i servizi umani e la consulenza, e sarebbe comunque una promessa
+ * avvocato. Rivolio non è un servizio legale e non lo diventa: le regole
+ * di chi incassa vietano i servizi umani e la consulenza, e sarebbe comunque una promessa
  * che non possiamo mantenere.
  *
  * ⚠️ I NUMERI. Il contributo unificato per le cause di valore modesto e

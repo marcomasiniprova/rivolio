@@ -6,7 +6,7 @@ import { SERVIZIO_ATTIVO, supabaseServizio } from "@/lib/supabase/servizio";
  * POST /api/pratiche/recesso  { verifica: "<uuid>" }
  *
  * Registra la spunta di rinuncia al recesso (art. 59 Cod. Consumo) sulla
- * verifica, PRIMA del rimando a Polar: momento esatto e testo versionato.
+ * verifica, PRIMA del rimando alla cassa: momento esatto e testo versionato.
  * La rotta di checkout non lascia passare nessuno senza questa firma.
  *
  * Prima spunta vinta: se un timestamp c'è già non si sovrascrive (il

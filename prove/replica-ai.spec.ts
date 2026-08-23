@@ -36,7 +36,7 @@ const pratica = {
   passeggeri: [{ nome: "Mario", cognome: "Rossi" }],
   importo_fascia: 600,
   prezzo_pagato: null,
-  polar_ordine: null,
+  ordine_pagamento: null,
   email: "mario@esempio.it",
   scadenza_stimata: null,
   garanzia_fino_al: null,

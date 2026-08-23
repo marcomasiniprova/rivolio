@@ -12,13 +12,7 @@ import {
   prezzoCheck,
   scontoDaCheck,
 } from "../lib/check/ingresso";
-import {
-  chiaveDiProvaValida,
-  consumaPass,
-  creaPass,
-  leggiPass,
-  segnaturaProva,
-} from "../lib/check/pass";
+import { consumaPass, creaPass, leggiPass } from "../lib/check/pass";
 import { LISTINI } from "../lib/prezzi";
 import { COPY } from "../lib/copy";
 
@@ -205,45 +199,19 @@ test.describe("Se il check si paga, il sito non dice gratis", () => {
   });
 });
 
-/* ── LA CHIAVE DEL COLLAUDATORE ────────────────────────────────────────
-   La cassa di prova emette ricevute VERE. Finché esiste, la porta deve
-   essere di Valerio e di nessun altro. L'11/08 non lo era: il muro
-   spediva `/cassa-prova?s=<segreto>` dentro la propria risposta, quindi
-   la parola segreta la riceveva chiunque premesse il bottone e il muro
-   si apriva da solo. */
-test.describe("La cassa di prova è chiusa a chiave", () => {
-  const SEGRETO = "parola-di-prova";
-
-  test("la chiave nel cookie non contiene la parola segreta", () => {
-    const chiave = segnaturaProva(SEGRETO);
-    expect(chiave).not.toBeNull();
-    expect(chiave!).not.toContain(SEGRETO);
-  });
-
-  test("passa solo la chiave giusta", () => {
-    expect(chiaveDiProvaValida(segnaturaProva(SEGRETO), SEGRETO)).toBe(true);
-    expect(chiaveDiProvaValida("qualcosa", SEGRETO)).toBe(false);
-    expect(chiaveDiProvaValida(null, SEGRETO)).toBe(false);
-    expect(chiaveDiProvaValida("", SEGRETO)).toBe(false);
-    /* La chiave di un'altra parola non apre questa porta. */
-    expect(chiaveDiProvaValida(segnaturaProva("altra-parola"), SEGRETO)).toBe(false);
-  });
-
-  test("senza segreto non si apre niente", () => {
-    expect(segnaturaProva("")).toBeNull();
-    expect(chiaveDiProvaValida("qualsiasi-cosa", "")).toBe(false);
-  });
-
-  test("la parola segreta non finisce MAI nella risposta del muro", () => {
-    /* Il difetto vero dell'11/08, scritto come prova: nel muro non si
-       costruisce un indirizzo mettendoci dentro CASSA_PROVA_SEGRETO. */
+/* ── LA CASSA FINTA È ESTINTA (22/08) ──────────────────────────────────
+   La cassa di prova e la chiave del collaudatore sono state tolte: la cassa
+   è Stripe e basta. Il muro non ha più nessun indirizzo con un segreto
+   dentro da poter far trapelare, quindi la vecchia guardia sulla parola
+   segreta non ha più niente da controllare. */
+test.describe("La cassa finta non c'è più", () => {
+  test("nel muro non resta nessuna traccia della cassa di prova", () => {
     for (const f of ["lib/check/cancello.ts", "app/api/verifica/route.ts"]) {
       const testo = readFileSync(join(process.cwd(), f), "utf8");
       const codice = testo.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
-      expect(
-        /cassa-prova\?s=|\$\{[^}]*CASSA_PROVA_SEGRETO/.test(codice),
-        `${f} rimette il segreto nella risposta del muro`,
-      ).toBe(false);
+      expect(codice, `${f} ha ancora un riferimento alla cassa di prova`).not.toMatch(
+        /cassa-prova|CASSA_PROVA_SEGRETO|cassaDiProvaAperta|inCollaudo/,
+      );
     }
   });
 });

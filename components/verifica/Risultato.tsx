@@ -48,8 +48,6 @@ export type DatiVerifica = {
   motivo: string | null;
   /** Vero se il dato viene dal fornitore dimostrativo: il badge è obbligatorio. */
   demo: boolean;
-  /** Vero solo per il browser del collaudatore: apre il percorso sui voli ZZ. */
-  collaudo?: boolean;
   /** Il listino che questa persona vede: test dei due prezzi (9/08). */
   listino?: { singolaTesto: string; famigliaTesto: string };
   /**
@@ -92,16 +90,8 @@ export type DatiVerifica = {
   arrivoEffettivoUtc: string | null;
   km: number | null;
   scadenza: { dataStimata: string; avvertenza: string } | null;
-  /** Quali checkout link Polar sono configurati lato server. */
+  /** La cassa Stripe è attiva: quando sì, i bottoni d'acquisto si accendono. */
   checkout: { singola: boolean; famiglia: boolean };
-  /**
-   * La cassa di prova è aperta (COLLAUDO_APERTO o CASSA_PROVA_SEGRETO).
-   * Quando è vera, la pratica si può aprire anche su un volo VERO senza
-   * Polar: il checkout passa dalla cassa finta. Senza questo, overbooking
-   * e coincidenza persa su un volo reale mostravano «pagamento non
-   * attivo» e non aprivano niente (Valerio, 13/08).
-   */
-  cassaProva: boolean;
   /**
    * IL CREDITO DELLA GARANZIA (Valerio, 17/08). Se chi guarda è collegato e ha
    * un credito libero, al posto del pagamento apre la pratica gratis. `singola`
@@ -208,7 +198,6 @@ function ContatoreReveal({ importo }: { importo: number }) {
 function CatturaEmail({
   idVerifica,
   demo,
-  collaudo = false,
   titolo,
   testo,
   etichetta,
@@ -219,7 +208,6 @@ function CatturaEmail({
 }: {
   idVerifica: string | null;
   demo: boolean;
-  collaudo?: boolean;
   titolo?: string;
   testo: string;
   etichetta: string;
@@ -242,16 +230,10 @@ function CatturaEmail({
   async function invia(evento: FormEvent | null, forza?: { email?: string; insisto?: boolean }) {
     evento?.preventDefault();
     const daMandare = forza?.email ?? email;
-    /* ⚠️ IL COLLAUDATORE PASSA. Su un volo dimostrativo l'email non si
-       salva, ed è giusto: non c'è niente da avvisare, e chi ci capita per
-       caso non deve lasciare un indirizzo per un volo che non esiste. Ma
-       per chi sta collaudando il prodotto quello sbarramento è la fine
-       del percorso: senza email la pratica non si lega a un account,
-       quindi i quattro fogli, il no della compagnia e la conciliazione
-       non li vede nessuno (visto da Valerio il 12/08 provando ZZ600 sul
-       sito vero). Il permesso vive in un cookie firmato e vale solo per
-       il suo browser. */
-    if ((demo && !collaudo) || !idVerifica) {
+    /* Su un volo dimostrativo l'email non si salva, ed è giusto: non c'è
+       niente da avvisare, e chi ci capita per caso non deve lasciare un
+       indirizzo per un volo che non esiste. */
+    if (demo || !idVerifica) {
       setStato("demo");
       return;
     }
@@ -421,7 +403,7 @@ function Idoneo({ dati, importo }: { dati: DatiVerifica; importo: number }) {
       ? riempi(t.titoloTemplate, { ritardo })
       : null;
   const avviso = dati.avvisoCheckout;
-  const compraSingola = dati.demo || dati.checkout.singola || dati.cassaProva;
+  const compraSingola = dati.demo || dati.checkout.singola;
 
   const testoAvviso =
     avviso === "demo"
@@ -655,11 +637,11 @@ function Idoneo({ dati, importo }: { dati: DatiVerifica; importo: number }) {
   );
 }
 
-/* --------------------- #21: la rinuncia al recesso, poi Polar -------- */
+/* --------------------- #21: la rinuncia al recesso, poi la cassa -------- */
 
 /**
  * La spunta di rinuncia al recesso (art. 59 Cod. Consumo) DAVANTI ai
- * bottoni verso Polar. Senza spunta non si parte; con la spunta il
+ * bottoni verso la cassa. Senza spunta non si parte; con la spunta il
  * consenso si registra sul server (/api/pratiche/recesso) e SOLO poi si
  * naviga al checkout. Il cancello vero sta comunque nella rotta di
  * checkout: qui l'esperienza, lì la legge.
@@ -691,7 +673,7 @@ function AcquistoPratica({ dati }: { dati: DatiVerifica }) {
   const emailDaUsare = dati.emailAccount ?? email;
   const mostraCampoEmail = serveSalvareEmail && !dati.emailAccount;
 
-  const compraFamiglia = dati.demo || dati.checkout.famiglia || dati.cassaProva;
+  const compraFamiglia = dati.demo || dati.checkout.famiglia;
 
   async function vai(tipo: "singola" | "famiglia") {
     if (inCorso) return;
@@ -989,7 +971,6 @@ function Incerto({ dati }: { dati: DatiVerifica }) {
         <CatturaEmail
           idVerifica={dati.idVerifica}
           demo={dati.demo}
-          collaudo={dati.collaudo}
           testo={t.avviso.testo}
           etichetta={t.avviso.campoEmail.etichetta}
           segnaposto={t.avviso.campoEmail.segnaposto}

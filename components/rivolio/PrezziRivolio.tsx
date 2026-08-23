@@ -21,8 +21,8 @@ import { listinoCorrente } from "@/lib/prezzi-server";
  * apre: la matematica è in COPY.prezzi.notaConfronto.
  *
  * I bottoni portano tutti al check (#controllo): sul sito non si compra
- * niente prima del verdetto, è il funnel (SPEC §3) e non si scavalca.
- * Quando i checkout Polar esisteranno, il flusso partirà comunque da lì.
+ * niente prima del verdetto, è il funnel (SPEC §3) e non si scavalca. Il
+ * pagamento vero (Stripe) parte dal verdetto, dopo il check.
  */
 const SEZIONE = COPY.prezzi;
 const CHECK = SEZIONE.piani.check;

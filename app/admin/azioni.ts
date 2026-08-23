@@ -93,7 +93,7 @@ export async function moderaRecensione(
  * La verifica passa a `corretta` con l'esito giusto.
  *
  * ⚠️ È L'UNICA AZIONE DEL PANNELLO CHE FERMA UNA VENDITA: sia la rotta
- * della cassa sia il webhook di Polar rifiutano un caso con
+ * della cassa sia il webhook di Stripe rifiutano un caso con
  * `conferma === "corretta"`. Per questo il campo della nota è
  * obbligatorio: una vendita si blocca con un motivo scritto, non con un
  * clic.

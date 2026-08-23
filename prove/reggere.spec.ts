@@ -80,7 +80,7 @@ test.describe("I promemoria partono da soli", () => {
 
   test("il benvenuto pagato non si perde: il cron lo recupera se non è mai partito", () => {
     /* 🔴 IL BUCO: il benvenuto (T+0, col link magico per entrare) lo manda
-       solo il webhook di Polar. Se in quel momento Resend è giù, la pratica
+       solo il webhook di Stripe. Se in quel momento Resend è giù, la pratica
        resta pagata SENZA il link, e la persona non trova quello che ha
        comprato. Il cron deve rimandarlo: pratica pagata + nessun evento
        `email_t0` → si rimanda `praticaPronta`. */

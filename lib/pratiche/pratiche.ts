@@ -14,7 +14,7 @@ import { scadenzaStimata } from "../regole/eu261";
  * - Ogni transizione lascia un evento in `pratiche_eventi`: è la cronologia
  *   che l'utente vede nel tracker, e la memoria del cron dei follow-up.
  * - Niente eccezioni verso chi chiama: ogni funzione torna un esito pulito.
- *   Un webhook che esplode fa ritentare Polar all'infinito; un cron che
+ *   Un webhook che esplode fa ritentare Stripe all'infinito; un cron che
  *   esplode salta il giro di tutti per colpa di una pratica sola.
  */
 
@@ -46,7 +46,7 @@ export type Pratica = {
   passeggeri: Passeggero[];
   importo_fascia: number | null;
   prezzo_pagato: number | null;
-  polar_ordine: string | null;
+  ordine_pagamento: string | null;
   email: string;
   scadenza_stimata: string | null;
   garanzia_fino_al: string | null;
@@ -123,7 +123,7 @@ async function trovaOCreaUtente(
      lì che si prendono i refusi. Questo è la rete sotto: qui l'account
      nasce DAVVERO, e un indirizzo scritto male diventa un cliente che ha
      pagato e non riesce a entrare.
-     ⚠️ Niente DNS in questo punto: gira dentro il webhook di Polar, e un
+     ⚠️ Niente DNS in questo punto: gira dentro il webhook di Stripe, e un
      DNS lento farebbe ritentare il pagamento all'infinito. La forma e le
      caselle usa e getta si controllano senza toccare la rete. */
   const controllo = controllaFormato(email, { insisto: true });
@@ -231,7 +231,7 @@ export async function creaPratica({
     if (errP || !pratica) {
       /* IDEMPOTENZA A LIVELLO DATABASE (audit 14/08, insieme all'indice unico
          pratiche_verifica_unica della migrazione 2026-08-14-scala.sql). Due
-         consegne dello stesso pagamento Polar in parallelo passano entrambe il
+         consegne dello stesso pagamento Stripe in parallelo passano entrambe il
          controllo "esiste già?" e provano a creare: l'indice unico fa fallire
          la seconda con 23505. Non è un errore, la pratica c'è: la rileggiamo e
          lo diciamo (giaEsisteva), così il webhook che ha perso la corsa NON

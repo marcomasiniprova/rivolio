@@ -87,8 +87,8 @@ test.describe("Quello che ferma davvero una vendita", () => {
        tornerebbe vendibile da quella porta, in silenzio. */
     for (const f of [
       "app/api/pratiche/checkout/route.ts",
-      "app/api/polar/webhook/route.ts",
-      // La cassa Stripe: il cancello sta nella funzione di evasione condivisa.
+      // La cassa Stripe: il cancello sta nella funzione di evasione condivisa,
+      // che il webhook Stripe chiama dopo aver verificato la firma.
       "lib/pratiche/evasione.ts",
     ]) {
       expect(leggi(f), f).toContain('conferma === "corretta"');

@@ -48,7 +48,6 @@ test("ogni rotta che ci costa soldi passa dal freno condiviso", () => {
     "app/api/verifica/operativo/route.ts",
     "app/api/voli-tratta/route.ts",
     "app/api/leggi-carta/route.ts",
-    "app/api/check/prova/route.ts",
   ];
   for (const rotta of care) {
     const testo = codice(rotta);

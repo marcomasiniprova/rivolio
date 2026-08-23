@@ -2,12 +2,11 @@ import Stripe from "stripe";
 import { tinGuasto } from "@/lib/eventi/telegram";
 
 /**
- * Stripe, il gateway di pagamento vero.
+ * Stripe, il gateway di pagamento vero: la cassa di Rivolio.
  *
- * Prende il posto di Polar, che il 10/08 ha detto no ("Use case not
- * supported": categoria a rischio, non il testo scritto male). Stripe non
- * ha lo stesso cancello sulla categoria: si incassa a nome del titolare
- * dell'account.
+ * Si incassa a nome del titolare dell'account. Con Managed Payments Stripe
+ * fa da merchant of record e versa l'IVA al posto nostro, che è la ragione
+ * per cui funziona senza partita IVA (vedi sotto).
  *
  * Un file solo per due motivi:
  * 1. il client si costruisce una volta e si riusa (aprire una connessione
@@ -105,8 +104,8 @@ export async function creaSessioneCheckout(opts: {
               ...(opts.descrizione ? { description: opts.descrizione } : {}),
               /* MANAGED PAYMENTS: Stripe fa da merchant of record e gestisce
                  l'IVA in 80+ paesi al posto nostro (è la ragione per cui non
-                 serve la partita IVA per l'IVA, il ruolo che Polar ha
-                 rifiutato). È acceso di default sull'account e ESIGE un tax
+                 serve la partita IVA per l'IVA, il ruolo che ci mancava e che era stato
+                 il nodo di tutto). È acceso di default sull'account e ESIGE un tax
                  code eleggibile su ogni prodotto, se no la cassa non si apre.
                  Rivolio consegna un documento/informazione via internet a un
                  consumatore: "Electronically Delivered Information Services,
