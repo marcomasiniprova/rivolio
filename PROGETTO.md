@@ -8,7 +8,7 @@ Qui si legge quando serve capire; là si obbedisce sempre.*
 
 **Rivolio è lo scanner dei rimborsi aerei (Reg. CE 261/2004)**, definito dal
 documento di Valerio del 07/08: check sul web, verdetto a tre stati dal motore
-deterministico (l'AI non decide MAI), pratica 14,90 / famiglia 24,90, lettera
+deterministico (l'AI non decide MAI), pratica 16,90 / famiglia 29,90, lettera
 pronta che l'utente invia da sé (non siamo intermediari), garanzia legata
 all'esito, admin in shadow mode. Online su **rivolio.it**.
 
@@ -18,14 +18,14 @@ così: avvicina il primo utente pagante?
 Mappa dei documenti: `PIANO.md` (dove andiamo) · `ARRETRATI.md` (cosa resta) ·
 `SPEC.md` (cosa costruiamo) · `DECISIONI.md` (scelte chiuse) · `BRAND.md`
 (marchio) · `CONTENUTI.md` (social) · `STATO.md` (dove siamo, giro per giro) ·
-`MOTORE.md` (di cosa è fatto il motore) · `PAGAMENTI.md` (i venditori).
+`MOTORE.md` (di cosa è fatto il motore).
 
 Marchio per esteso: Rivolio. Tagline: *Riprenditi i soldi che ti devono.*
 
 ## Lo stack, fissato
 
 Next 16 + React 19 + Tailwind 4 + **Motion** su **Netlify** · **Supabase** ·
-**Polar** (Valerio non ha partita IVA) · Resend · Telegram Bot API · dati ISTAT
+**Stripe** (Managed Payments, Valerio non ha partita IVA) · Resend · Telegram Bot API · dati ISTAT
 e MIMIT. Le funzioni Netlify hanno 10 secondi: il matcher va a lotti.
 
 ## Il flusso della pratica

@@ -36,8 +36,8 @@ check del volo → verdetto → pratica di reclamo. Dominio: rivolio.it. Contest
 - INIZIA-QUI.md — parti da qui: setup locale, mappa, stato, cosa collaudare.
 - STATO.md — il diario giro per giro (l'ultimo in cima). PROGETTO.md — protocollo e regole operative.
 - ARRETRATI.md e promemoria.md — le cose da fare, mie e tue. MOTORE.md — come gira il motore. SPEC.md — cosa fa il prodotto.
-- LANCIO.md e PAGAMENTI.md — blocchi al lancio e la cassa (Polar ha detto no). docs/ — riferimento e ricerca (BRAND, sentenze, riforma, Polar...).
-- Codice: lib/regole = il motore · lib/check = il muro · lib/pratiche = la pratica · lib/recensioni = il codice dell'analisi gratis.
+- LANCIO.md — blocchi al lancio. docs/ — riferimento e ricerca (BRAND, sentenze, riforma...).
+- Codice: lib/regole = il motore · lib/check = il muro · lib/pratiche = la pratica · lib/recensioni = il codice dell'analisi.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

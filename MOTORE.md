@@ -74,7 +74,7 @@ Alla fine escono **tre risposte, mai due**:
 
 **Il numero che comanda tutto il progetto: falsi positivi zero.** Un
 falso positivo è un giallo o un rosso che esce verde, cioè uno che paga
-14,90 per niente. C'è una lista di 55 casi decisi a mano (`casi-oro.ts`)
+16,90 per niente. C'è una lista di 55 casi decisi a mano (`casi-oro.ts`)
 e a ogni modifica devono passare tutti e 55. Se uno solo sbaglia in quella
 direzione, non si pubblica.
 
@@ -155,8 +155,8 @@ una buona notizia.
 
 ## Le altre cose collegate (non sono il motore)
 
-- **Polar**: incassa i pagamenti al posto nostro e fa le fatture. Serve
-  perché non hai partita IVA.
+- **Stripe (Managed Payments)**: incassa i pagamenti al posto nostro, fa le
+  fatture e gestisce l'IVA. Serve perché non hai partita IVA.
 - **Resend**: manda le email.
 - **Telegram**: gli avvisi a te.
 - **OpenFlights → OurAirports**: l'elenco degli aeroporti, per calcolare

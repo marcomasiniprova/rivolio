@@ -39,7 +39,7 @@ L'app mobile è il posto dove segui la pratica DOPO aver pagato, mai la porta.
 | 3a | NON IDONEO: risposta chiara, gratis, saluto pulito | |
 | 3b | IDONEO: il reveal. "Atterrato alle 02:47 invece delle 22:55. 3h52 di ritardo. Fascia 250€." | |
 | 4 | ORA l'email ("ti salvo la pratica") | |
-| 5 | Pagamento (Polar) | |
+| 5 | Pagamento (Stripe) | |
 | 6 | ORA i documenti (carta d'imbarco) | |
 | 7 | ORA l'app ("segui la pratica") | |
 
@@ -110,9 +110,9 @@ Prescrizione: data di scadenza STIMATA per caso, con avvertenza esplicita.
 
 | Prodotto | Prezzo | Nota |
 |---|---|---|
-| Check | **Gratis, sempre** | è l'amo e il marketing. Costo ~0,0005$ l'uno |
-| 1 pratica | **14,90€** | |
-| Famiglia (stesso volo, fino a 5) | **24,90€** | il margine vero: una famiglia di 4 recupera 1.000€+ |
+| Check | **1,99 (interruttore, oggi acceso)** | costo ~0,0005$ l'uno; l'incerto non consuma il credito |
+| 1 pratica | **16,90€** | |
+| Famiglia (stesso volo, fino a 5) | **29,90€** | il margine vero: una famiglia di 4 recupera 1.000€+ |
 
 Niente altri SKU al lancio. Meno scelte = più conversione.
 
@@ -167,11 +167,11 @@ Expo (diventa il tracker) · il modo di lavorare (verify, prove, documenti).
   `pratiche` (stato macchina: creata → pagata → documenti → inviata →
   sollecito → enac → esito), `pratiche_eventi` (cronologia).
 - `/api/verifica` (check pubblico, senza auth, con throttling),
-  `/api/polar/webhook` (pagamento → pratica), `/api/motore/segui`
+  `/api/stripe/webhook` (pagamento → pratica), `/api/motore/segui`
   (cron follow-up, protetto da MOTORE_SEGRETO).
 - Pagina risultato con reveal (contatore che sale, card condivisibile),
   area `/pratica/[id]`, admin shadow-mode.
-- Polar checkout: 2 prodotti (pratica, famiglia). MoR: gestisce lui l'IVA UE.
+- Stripe Checkout: price_data inline (pratica, famiglia), IVA inclusa. Managed Payments (MoR): gestisce lui l'IVA UE.
   ~5,3% + 0,40€ a vendita italiana.
 
 **Tabelle di viaggio (offerte, ricerche, invii, strutture) = eredità:**
@@ -199,7 +199,7 @@ Regola: 60fps su un iPhone 12, `prefers-reduced-motion` rispettato.
 ## 9. Costi (verificati nel documento)
 
 AeroDataBox $5-32/mese · AviationStack riserva gratis · Supabase Pro (c'è) ·
-Netlify gratis · Resend gratis (3k/mese) · Polar ~5,3%+0,40€ · Mistral solo
+Netlify gratis · Resend gratis (3k/mese) · Stripe ~5%+0,25€ · Mistral solo
 quando entrerà l'OCR. Totale ≈ 30-45€/mese.
 
 ## 10. Come si verifica che funzioni
@@ -210,7 +210,7 @@ quando entrerà l'OCR. Totale ≈ 30-45€/mese.
 3. **La prova che decide tutto (di Valerio, 2 ore):** chiave AeroDataBox su
    10 voli reali degli ultimi 2 anni → l'orario EFFETTIVO di atterraggio
    deve esserci. Poi 30 casi reali a mano: meno di 3 idonei = fermare tutto.
-4. Prova end-to-end: check vero → pagamento vero (sandbox Polar) → lettera
+4. Prova end-to-end: check vero → pagamento vero (sandbox Stripe) → lettera
    → email T+0 ricevuta.
 
 ## 11. Fuori dalla v1 (non discutibile)
