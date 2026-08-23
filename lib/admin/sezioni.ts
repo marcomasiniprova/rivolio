@@ -124,7 +124,7 @@ export const SEZIONI: Sezione[] = [
   },
   {
     /* Il quarto pezzo della crescita, accanto agli altri: i creator che
-       mandano traffico in cambio di una commissione (30%). Qui si creano,
+       mandano traffico in cambio di una commissione (40% di default). Qui si creano,
        si copia il loro link e si vede quanto è maturato e quanto devi. */
     chiave: "affiliati",
     href: "/admin/affiliati",

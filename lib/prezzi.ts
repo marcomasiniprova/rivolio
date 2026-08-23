@@ -65,7 +65,7 @@ export function euro(n: number): string {
 
 export const LISTINI: Record<Variante, Listino> = {
   /* I prezzi di lancio decisi da Valerio (22/08), su misura per i margini
-     con la commissione affiliati al 30%: singola 16,90, famiglia 29,90. */
+     con la commissione affiliati al 40%: singola 16,90, famiglia 29,90. */
   a: listino(16.9, 29.9),
   b: listino(24.9, 39.9),
 };
