@@ -15,7 +15,7 @@ non finisce mai.*
 
 | | TOFU · ti scoprono | MOFU · si fidano | BOFU · pagano |
 |---|---|---|---|
-| Cosa | video del tabellone, disruption-jacking, screenshot condivisi | il reveal col dato oggettivo verificabile, la garanzia, "puoi farlo gratis da solo" | pratica 14,90 / famiglia 24,90 |
+| Cosa | video del tabellone, disruption-jacking, screenshot condivisi | il reveal col dato oggettivo verificabile, la garanzia, "puoi farlo gratis da solo" | pratica 16,90 / famiglia 29,90 |
 | Dove | TikTok, Reels, Shorts, gruppi FB, Reddit, commenti | la pagina del risultato | il checkout Polar |
 | Misura | check completati | idonei che lasciano l'email | paganti, e pratiche PAGATE dalle compagnie |
 | Errore classico | vendere nel video | chiedere l'email prima del reveal | vendere sui casi incerti |

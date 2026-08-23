@@ -156,9 +156,10 @@ invii e il motivo del rifiuto scritto in chiaro. Mandami quella riga.
    link su WhatsApp o Instagram si costruisce dall'indirizzo del sito:
    dopo il deploy, controlla incollando `https://rivolio.it` in una
    chat con te stesso.
-2. **La chiave della cassa di prova.** Vale per un browser alla volta e
-   l'indirizzo cambia col dominio. Riprendila una volta:
-   `https://rivolio.it/api/check/prova/chiave?s=RIVOLIO`
+2. **Gli indirizzi di Stripe.** Il ritorno dopo il pagamento e l'endpoint
+   del webhook usano l'indirizzo del sito: dopo il cambio dominio, controlla
+   che `NEXT_PUBLIC_SITO` sia il nuovo dominio e che l'URL del webhook su
+   Stripe punti a `https://rivolio.it/api/stripe/webhook`.
 3. **L'app.** Va riesportata (`npm run anteprima` dentro `mobile/`)
    perché l'indirizzo del sito ce l'ha scritto dentro da quando è stata
    costruita.

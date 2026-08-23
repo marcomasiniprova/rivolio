@@ -57,7 +57,7 @@ riceve la lettera, la invia e la sequenza di follow-up parte da sola.
 |---|---|
 | Landing check-first (hero col campo volo+data, garanzia, prezzi, FAQ oneste) | ✅ 07/08, rifinita (impeccable, taste, seo) |
 | Pagina risultato: reveal, dato oggettivo, card condivisibile, cattura email | ✅ 07/08 |
-| Checkout Polar (pratica 14,90 / famiglia 24,90) + webhook | ✅ codice pronto, firma provata su 10 casi · ⏳ i 2 link e il segreto da Valerio |
+| Checkout Stripe (pratica 16,90 / famiglia 29,90) + webhook firmato | ✅ 22/08: Stripe Managed Payments, prezzi finali IVA inclusa, live in modalità test |
 | Lettera di reclamo deterministica + canali compagnie verificati | ✅ 20 compagnie, riverificate l'8/08 (entità legali, NEB, chi rifiuta gli intermediari) + riga meteo pronta ma spenta |
 | Sequenza email T+0/2/15/30/60 (Resend) + cron follow-up | ✅ 07/08, invii idempotenti marcati a evento |
 | Tracker pratica (web) + area utente | ✅ 07/08 |
@@ -75,9 +75,9 @@ riceve la lettera, la invia e la sequenza di follow-up parte da sola.
 |---|---|
 | Netlify: progetto `rivolio` creato, variabili impostate, rivoglio.netlify.app | ✅ 07/08 via connettore |
 | Primo deploy di produzione | ✅ 8/08: **https://rivoglio.netlify.app** (via workbench + connettore; netlify.toml con build e plugin Next). Il rivoglioo.netlify.app di Valerio è un altro account, senza variabili: da dismettere |
-| Polar: account aperto (Valerio) | 🔴 **RIFIUTATO il 10/08** ("Use case not supported"). E l'11/08 la ricerca ha mostrato che **non è un problema di Polar**: le pagine ufficiali di Paddle, Lemon Squeezy e Dodo hanno tutte una riga che ci prende (viaggi, servizi legali, preparazione di documenti). La categoria è chiusa sullo scaffale standard. Le strade, i due argomenti da fare a un essere umano e il motivo per cui il primo da provare è **Paddle**: `PAGAMENTI.md`. **Serve una decisione di Valerio** |
-| Cassa di prova, per percorrere il giro senza un venditore | ✅ 11/08: `CASSA_PROVA_SEGRETO` su Netlify, chiusa a chiave (cookie firmato). ⚠️ Da **togliere** il giorno del venditore vero |
-| Chiavi su Netlify: SUPABASE_SECRET_KEY, RESEND_API_KEY, AERODATABOX, MISTRAL | ✅ 8/08: tutte e 4 online, motore vero collaudato (FR4001) · ⏳ POLAR quando esiste |
+| La cassa che incassa | ✅ **22/08: Stripe Managed Payments.** Polar aveva rifiutato il caso d'uso (categoria a restrizione), si è passati a Stripe: anch'esso merchant of record, niente partita IVA per incassare. Live in test; resta un pagamento vero end-to-end e il passaggio da test a live |
+| ~~Cassa di prova~~ | ✅ **22/08: cancellata.** C'è la cassa vera (Stripe), la finta non serve più: pagina, rotte e chiave rimosse |
+| Chiavi su Netlify: SUPABASE_SECRET_KEY, RESEND_API_KEY, AERODATABOX, MISTRAL, STRIPE | ✅ 8/08 le prime 4 (motore collaudato, FR4001) · ✅ 22/08 STRIPE_SECRET_KEY + STRIPE_WEBHOOK_SECRET |
 | Dominio di Rivolio (slot Hostinger gratuito da configurare) | ⏳ **serve Valerio** |
 | Legale: condizioni d'uso + disclaimer da avvocato; commercialista sul fiscale | ⏳ prima del lancio vero |
 
@@ -162,10 +162,9 @@ migrazioni), poi FASE 2, distribuzione.
 
 ⚠️ **Ma dall'11/08 c'è un secondo collo di bottiglia, ed è più duro:
 nessun venditore ufficiale accetta il caso d'uso.** Il muro del check è
-costruito, provato e acceso, e il bottone "Sblocca l'analisi" porta a una
-cassa che non incassa. Finché quello non si risolve, ogni miglioramento
-del prodotto è lavoro che non porta un euro: **la decisione sul venditore
-viene prima di tutto il resto** (`PAGAMENTI.md`).
+costruito, provato e acceso, e il bottone "Sblocca l'analisi" porta a Stripe (Managed
+Payments, live in test). Quello che resta è un pagamento vero end-to-end,
+il passaggio da test a live e il commercialista per il reddito.
 
 **Il dopo-lettera è finito, e adesso ha quattro colpi**: reclamo, replica
 al loro no, segnalazione all'ente, conciliazione. È il pezzo che dalla

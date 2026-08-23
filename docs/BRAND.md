@@ -145,4 +145,4 @@ rifinitura:
 - **Titoli grandi con UNA parola accentata** a colore o in corsivo: già
   nostro, si tiene.
 - Confronto "vecchio modo contro noi" in due card affiancate
-  (riferimento 4): perfetto per "AirHelp 35% contro Rivolio 14,90€".
+  (riferimento 4): perfetto per "AirHelp 35% contro Rivolio 16,90€".
