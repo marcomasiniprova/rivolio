@@ -19,49 +19,31 @@ mai da una stima travestita da fatto.*
 | La capienza nel minuto di punta | 🟢 **coda con ritentativo**: al "troppe richieste" aspetta e riprova invece di mollare |
 | Le sentenze citate nelle lettere | 🟡 **Sturgeon verificata sul testo, un errore corretto**, tre da rileggere dal tuo PC |
 | Il dominio e le email | 🟡 **istruzioni pronte per IONOS**, i venti minuti li devi fare tu |
-| **La cassa che incassa** | 🔴 **NON ESISTE** · le quattro email sono pronte in `EMAIL-VENDITORI.md` |
+| **La cassa che incassa** | 🟢 **Stripe, live in test** · Managed Payments, prezzi IVA inclusa |
 
 ---
 
-## 1. 🔴 Quello che ferma tutto: non c'è un venditore
+## 1. 🟢 La cassa: fatta, Stripe (live in test)
 
-Il bottone "Sblocca l'analisi" oggi non porta a un incasso vero. Polar ha
-detto no, e l'11/08 ho letto le pagine ufficiali degli altri tre: hanno
-**tutti** una riga che ci prende (`PAGAMENTI.md`).
+Il bottone "Sblocca l'analisi" porta a Stripe. Polar aveva rifiutato il
+caso d'uso (categoria reclami di viaggio, a restrizione), quindi si è
+passati a **Stripe Managed Payments**: anche lui merchant of record
+(incassa a nome suo, gestisce l'IVA UE, gira il netto), ma aperto.
+`STRIPE_SECRET_KEY` e `STRIPE_WEBHOOK_SECRET` sono su Netlify, il checkout
+è vivo in modalità test (`cs_test_`).
 
-**Finché non si risolve, la distribuzione è soldi buttati**: la gente
-arriva, trova un muro, non può pagare, se ne va e non torna.
+I prezzi sono **finali, IVA inclusa** (`tax_behavior: "inclusive"` in
+`lib/stripe.ts`): 1,99 il check, 16,90 la pratica, 29,90 la famiglia.
+Senza quella riga Stripe aggiungeva l'IVA sopra (1,99 diventava 2,43): il
+difetto è chiuso.
 
-Le due strade vere, in ordine di quanto sono nelle nostre mani:
-1. **Provare Paddle dicendo la verità.** La sua riga sui viaggi nomina
-   tre cose che noi non siamo (prenotazioni, club vacanze,
-   multiproprietà) e la sua esclusione dei "servizi umani" gioca a
-   nostro favore, perché noi vendiamo software. Aspettarsi domande.
-2. **Partita IVA e incasso diretto.** È l'unica che non dipende
-   dall'umore di qualcun altro, e cambia anche il conto: senza
-   intermediario si tiene di più. Ma è una decisione fiscale e va presa
-   col commercialista, non qui.
-
-### 🔴 E il giorno del venditore serve un prodotto in più, o si toglie una promessa
-
-Il sito scrive in quattro punti che **i 1,99 dell'analisi si scalano
-dalla pratica**: chi paga l'analisi deve poi vedersi chiedere **12,91**,
-non 14,90.
-
-Il link di un venditore però porta un **prezzo fisso**, deciso nel suo
-pannello, che dei 1,99 non sa niente. Quindi il giorno che si configura
-`POLAR_CHECKOUT_PRATICA` (o l'equivalente di chi incassa) le strade sono
-due, e vanno scelte prima di accendere:
-
-- **due prodotti in più** (`Pratica scontata` 12,91 e `Pratica famiglia
-  scontata` 22,91), e il codice manda lì chi ha la ricevuta;
-- **oppure si toglie la promessa** dal sito, e l'analisi si paga a parte.
-
-Finché non è deciso, la pagina del verdetto mostra il **prezzo pieno**
-appena un venditore vero è configurato: uno sconto scritto sul bottone e
-non applicato alla cassa è il motivo per cui una persona chiude la
-pagina. Con la sola cassa di prova lo sconto si vede e si applica, perché
-lì il conto lo rifà lo stesso codice.
+**Cosa resta prima dell'incasso vero**, ed è tutto in mano a Valerio:
+1. **Un pagamento vero end-to-end**, non in sandbox: una carta vera, e
+   controllare che la pratica si apra e il netto arrivi.
+2. **Il passaggio da test a live** su Stripe: le chiavi `sk_live_` e il
+   segreto webhook di produzione al posto di quelle di test.
+3. **Il commercialista** per il reddito: Managed Payments toglie l'IVA
+   dalle spalle, non l'imposta sul reddito di quello che incassi.
 
 ---
 
@@ -237,9 +219,6 @@ rieseguibile (`attacco.sh`).
 | Id di verifica inventato | 402 |
 | Quattro ricevute false e manomesse | 402 |
 | L'orario di atterraggio nell'elenco voli | assente |
-| La cassa di prova senza chiave | 404 |
-| Emettere una ricevuta senza chiave | 404 |
-| La chiave con la parola sbagliata | 404 |
 | **Riusare una ricevuta già consumata** | **era 200 🔴, ora 402 · verificato sul sito online** |
 
 **I due che sono passati, e come li ho chiusi:**
