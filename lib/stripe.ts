@@ -112,8 +112,12 @@ export async function creaSessioneCheckout(opts: {
               /* MANAGED PAYMENTS: Stripe fa da merchant of record e gestisce
                  l'IVA in 80+ paesi al posto nostro (è la ragione per cui non
                  serve la partita IVA per l'IVA, il ruolo che ci mancava e che era stato
-                 il nodo di tutto). È acceso di default sull'account e ESIGE un tax
-                 code eleggibile su ogni prodotto, se no la cassa non si apre.
+                 il nodo di tutto). ⚠️ MP NON è automatico: va abilitato nel pannello
+                 Stripe (Impostazioni, Managed Payments), se ne accettano i termini e
+                 passa una revisione di idoneità (in beta, lancio graduale). Quando è
+                 attivo ESIGE un tax code eleggibile su ogni prodotto, se no la cassa non
+                 si apre; finché non lo è si incassa con lo Stripe standard (venditore
+                 sei tu, e l'IVA la gestisci tu).
                  Rivolio consegna un documento/informazione via internet a un
                  consumatore: "Electronically Delivered Information Services,
                  personal use". ⚠️ Il codice esatto va confermato dal

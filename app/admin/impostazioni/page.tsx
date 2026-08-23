@@ -281,6 +281,15 @@ export default async function PaginaImpostazioni() {
   const voci = stato();
   const mancanti = voci.filter((v) => !v.ceSta && v.peso !== "facoltativa");
 
+  /* In che mondo stai incassando: legge solo il prefisso della chiave
+     (sk_live_ / sk_test_), mai il valore. È il badge in cima alla pagina. */
+  const kStripe = (process.env.STRIPE_SECRET_KEY ?? "").trim();
+  const modoStripe: "live" | "test" | "assente" = kStripe.startsWith("sk_live_")
+    ? "live"
+    : kStripe.startsWith("sk_test_")
+      ? "test"
+      : "assente";
+
   return (
     /* Il titolo e il ritorno al pannello adesso stanno nella testata e
        nella barra laterale del guscio: ripeterli qui vorrebbe dire due
@@ -289,6 +298,35 @@ export default async function PaginaImpostazioni() {
       {/* Il paragrafo che stava qui diceva parola per parola quello che
           la testata scrive già sotto il titolo: due volte la stessa frase
           a tre centimetri di distanza. */}
+
+      {/* IL BADGE CHE CONTA DI PIÙ: in che mondo stai incassando. Un
+          pagamento di prova non è un incasso; non doverlo chiedere a
+          nessuno è la ragione per cui questo avviso sta in cima. */}
+      <div
+        className={`mb-6 rounded-[14px] border p-5 ${
+          modoStripe === "live"
+            ? "border-verde/40 bg-verde/10"
+            : modoStripe === "test"
+              ? "border-amber-300 bg-amber-50"
+              : "border-red-200 bg-red-50"
+        }`}
+      >
+        <p className="font-display text-[1.15rem] tracking-[-0.02em] text-inchiostro">
+          {modoStripe === "live"
+            ? "Stripe: MODALITÀ LIVE"
+            : modoStripe === "test"
+              ? "Stripe: MODALITÀ TEST"
+              : "Stripe: chiave assente"}
+        </p>
+        <p className="mt-2 text-[14px] leading-relaxed text-fumo">
+          {modoStripe === "live"
+            ? "Stai incassando sul serio: le carte pagano davvero e i soldi arrivano."
+            : modoStripe === "test"
+              ? "I pagamenti sono finti (chiave sk_test_): utile per provare il giro, ma non incassi un euro. Per andare live metti la chiave sk_live_ su Netlify e rifai il deploy."
+              : "La cassa è spenta: manca STRIPE_SECRET_KEY, nessuno può pagare."}
+        </p>
+      </div>
+
       <div
         className={`rounded-[14px] border p-5 ${
           mancanti.length === 0

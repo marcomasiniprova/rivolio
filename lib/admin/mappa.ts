@@ -255,7 +255,7 @@ export const NODI: Nodo[] = [
     titolo: "La cassa (Stripe)",
     riga: "Fatta: la cassa è Stripe. Manca solo l'ultima chiave su Netlify.",
     dentro:
-      "La cassa è Stripe. Con Managed Payments Stripe fa da «merchant of record»: incassa al posto nostro e versa lui l'IVA in 80+ paesi, che è la ragione per cui funziona senza partita IVA. Il prezzo lo scriviamo noi in linea, niente prodotti da creare a mano. Resta da mettere STRIPE_WEBHOOK_SECRET su Netlify (prima test, poi live) e fare un pagamento di prova col webhook, per chiudere il giro pagamento → pratica.",
+      "La cassa è Stripe. Con Managed Payments Stripe fa da «merchant of record»: incassa al posto nostro e versa lui l'IVA in 80+ paesi, che è la ragione per cui funziona senza partita IVA. Il prezzo lo scriviamo noi in linea, niente prodotti da creare a mano. ⚠️ MP non è automatico: va abilitato nel pannello e passa una revisione di idoneità; finché non lo è si incassa con lo Stripe standard (venditore sei tu). STRIPE_SECRET_KEY e STRIPE_WEBHOOK_SECRET sono su Netlify e la cassa è viva in test: resta il passaggio a live (chiavi sk_live_).",
     stato: "fatto",
     icona: "cassa",
     x: 126,
