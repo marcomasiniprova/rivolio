@@ -29,12 +29,15 @@ export const PREZZO_FAMIGLIA = LISTINO_BASE.famiglia;
 /* ──────────────────────── COSTI VARIABILI ───────────────────── */
 
 /**
- * Polar, quando sarà attivo: 5% + 0,50 € a transazione (fonte: PAGAMENTI.md,
- * tariffa nuove organizzazioni). È il costo per pratica più alto di tutti.
- * Il giorno che l'incassatore cambia (Stripe, Paddle...) si aggiornano qui.
+ * La cassa: Stripe Managed Payments (merchant of record). Tutto compreso, per
+ * una carta europea: 3,5% del servizio MoR (IVA, frodi, dispute, assistenza)
+ * + ~1,5% + 0,25 € di incasso carta = ~5% + 0,25 € a transazione (fonte:
+ * support.stripe.com/questions/managed-payments-pricing, verificato 22/08).
+ * ⚠️ Una carta NON europea costa di più (fino a 6,5%+ e oltre con il cambio
+ * valuta): qui si usa la carta europea, che è il caso dei passeggeri italiani.
  */
-export const POLAR_PERCENTO = 0.05;
-export const POLAR_FISSO = 0.5;
+export const CASSA_PERCENTO = 0.05;
+export const CASSA_FISSO = 0.25;
 
 /**
  * AeroDataBox: piano Premium 150 $/mese per 600.000 richieste, poi
@@ -99,7 +102,7 @@ export function costoCheck(): number {
 
 export type ContoPratica = {
   ricavo: number;
-  polar: number;
+  cassa: number;
   ocr: number;
   email: number;
   /** La perdita ATTESA per la garanzia, al tasso dato. */
@@ -116,12 +119,12 @@ export function contoPratica(
   prezzo: number = PREZZO_PRATICA,
   tassoRimborso: number = TASSO_RIMBORSO_GARANZIA,
 ): ContoPratica {
-  const polar = prezzo * POLAR_PERCENTO + POLAR_FISSO;
+  const cassa = prezzo * CASSA_PERCENTO + CASSA_FISSO;
   const ocr = COSTO_OCR; // una lettura della carta dentro la pratica
   const email = EMAIL_PER_PRATICA * COSTO_EMAIL;
   const garanzia = prezzo * tassoRimborso;
-  const netto = prezzo - polar - ocr - email - garanzia;
-  return { ricavo: prezzo, polar, ocr, email, garanzia, netto };
+  const netto = prezzo - cassa - ocr - email - garanzia;
+  return { ricavo: prezzo, cassa, ocr, email, garanzia, netto };
 }
 
 export type Scenario = {
@@ -151,7 +154,7 @@ export function scenario(
   const conto = contoPratica(PREZZO_PRATICA, tassoRimborso);
   const ricavo = paganti * conto.ricavo;
   const costoDeiCheck = checkAlGiorno * costoCheck();
-  const costiPratiche = paganti * (conto.polar + conto.ocr + conto.email + conto.garanzia);
+  const costiPratiche = paganti * (conto.cassa + conto.ocr + conto.email + conto.garanzia);
   const nettoGiorno = ricavo - costoDeiCheck - costiPratiche;
   return { conversione, checkAlGiorno, paganti, ricavo, costoDeiCheck, costiPratiche, nettoGiorno };
 }
@@ -187,22 +190,23 @@ export const IVA = 0.22;
 /** I due modi di incassare, a confronto. */
 export const INCASSO = {
   mor: {
-    nome: "Merchant-of-record (Paddle/Lemon)",
+    nome: "Stripe Managed Payments (merchant of record)",
     percento: 0.05,
-    fisso: 0.5,
-    nota: "Versano IVA, OSS e fatture al posto tuo. Commissione più alta, zero adempimenti.",
+    fisso: 0.25,
+    nota: "Versa IVA e imposte indirette al posto tuo in 80+ paesi. È quello che usiamo: funziona senza partita IVA.",
   },
   stripe: {
     nome: "Stripe diretto (tua partita IVA)",
     percento: 0.015,
     fisso: 0.25,
-    nota: "Commissione bassa, ma IVA, OSS e fatture le gestisci tu (serve un commercialista).",
+    nota: "Commissione bassa, ma IVA, OSS e fatture le gestisci tu (serve un commercialista e la partita IVA).",
   },
 } as const;
 export type ModoIncasso = keyof typeof INCASSO;
 
-/** La commissione ai creator, sulla PRATICA (non sul check: è un anticipo che si scala). */
-export const CREATOR_PCT = 0.25;
+/** La commissione ai creator, sulla PRATICA (non sul check: è un anticipo che
+    si scala). 40% a tutti (scelta di Valerio, 22/08). */
+export const CREATOR_PCT = 0.4;
 
 export type LeveMargine = {
   prezzo: number;

@@ -18,18 +18,18 @@ import {
 test.describe("Economia", () => {
   test("il conto di una pratica: dove finiscono i 16,90", () => {
     const c = contoPratica();
-    // Polar: 5% + 0,50 su 16,90
-    expect(c.polar).toBeCloseTo(1.345, 3);
+    // Stripe Managed Payments (carta europea): ~5% + 0,25 su 16,90
+    expect(c.cassa).toBeCloseTo(1.095, 3);
     // garanzia stimata al 15% del prezzo
     expect(c.garanzia).toBeCloseTo(2.535, 3);
     // quel che resta
-    expect(c.netto).toBeCloseTo(13.017, 2);
+    expect(c.netto).toBeCloseTo(13.267, 2);
   });
 
   test("senza garanzia il netto è più alto; a metà reclami falliti crolla", () => {
-    expect(contoPratica(PREZZO_PRATICA, 0).netto).toBeCloseTo(15.552, 2);
-    // a rimborso pieno si perde la commissione già pagata a Polar: netto negativo
-    expect(contoPratica(PREZZO_PRATICA, 1).netto).toBeCloseTo(-1.348, 2);
+    expect(contoPratica(PREZZO_PRATICA, 0).netto).toBeCloseTo(15.802, 2);
+    // a rimborso pieno si perde la commissione già pagata alla cassa: netto negativo
+    expect(contoPratica(PREZZO_PRATICA, 1).netto).toBeCloseTo(-1.098, 2);
   });
 
   test("il costo di un check è spiccioli (dati + un po' di OCR)", () => {

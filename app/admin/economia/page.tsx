@@ -22,9 +22,9 @@ import SimulatoreMargine from "@/components/admin/SimulatoreMargine";
  * ECONOMIA: quanto si fa e quanto costa, dal check alla compensazione
  * (richiesta di Valerio, 14/08). La whiteboard dei conti, sui dati veri.
  *
- * ⚠️ I conti valgono col pagamento ATTIVO. Oggi Polar ha detto no, quindi
- * l'incasso vero è ancora zero: questa pagina serve a sapere DOVE si va, non
- * a dire che ci siamo già. I numeri con la stella sono stime dichiarate, non
+ * ⚠️ I conti valgono col pagamento ATTIVO. La cassa è Stripe, ma finché non
+ * arriva traffico l'incasso vero è ancora zero: questa pagina serve a sapere
+ * DOVE si va, non a dire che ci siamo già. I numeri con la stella sono stime, non
  * dati veri (regola 2 del progetto): il tasso di rimborso della garanzia non
  * esiste finché non si chiude una pratica.
  */
@@ -60,8 +60,8 @@ export default async function PaginaEconomia() {
   return (
     <div className="flex flex-col gap-5">
       <Avviso titolo="Questi conti valgono col pagamento attivo.">
-        Oggi Polar ha detto no, quindi l&apos;incasso vero è ancora zero: questa pagina
-        dice <strong>dove si va</strong>, non che ci siamo. I numeri con la{" "}
+        La cassa è Stripe, ma finché non arriva traffico l&apos;incasso vero è ancora zero:
+        questa pagina dice <strong>dove si va</strong>, non che ci siamo. I numeri con la{" "}
         <span className="numeri">*</span> sono stime dichiarate (regola: mai un numero
         inventato). Si cambiano da <code>lib/admin/economia.ts</code>.
       </Avviso>
@@ -72,7 +72,7 @@ export default async function PaginaEconomia() {
           forte
           etichetta="Netto per pratica"
           valore={euro(conto.netto)}
-          nota={`Su ${euro(PREZZO_PRATICA)}, dopo Polar e garanzia al ${pct(TASSO_RIMBORSO_GARANZIA)}*`}
+          nota={`Su ${euro(PREZZO_PRATICA)}, dopo Stripe e garanzia al ${pct(TASSO_RIMBORSO_GARANZIA)}*`}
         />
         <Kpi
           etichetta="Costo di un check"
@@ -152,7 +152,7 @@ export default async function PaginaEconomia() {
           <table className="w-full min-w-[420px] text-[14px]">
             <tbody className="divide-y divide-bordo/70">
               <Riga v="Incasso" n={conto.ricavo} forte />
-              <Riga v="Commissione di chi incassa (Polar, 5% + 0,50)" n={-conto.polar} />
+              <Riga v="Commissione di chi incassa (Stripe MoR, ~5% + 0,25)" n={-conto.cassa} />
               <Riga v={`Garanzia, rimborso atteso al ${pct(TASSO_RIMBORSO_GARANZIA)}*`} n={-conto.garanzia} />
               <Riga v="Lettura carta (OCR) + email di follow-up" n={-(conto.ocr + conto.email)} />
               <Riga v="Resta in tasca" n={conto.netto} forte verde />
@@ -291,8 +291,8 @@ export default async function PaginaEconomia() {
             </li>
           ))}
           <li className="flex items-baseline justify-between gap-3 pt-1">
-            <span>Polar per pratica: 5% + 0,50 € (fonte: PAGAMENTI.md)</span>
-            <span className="numeri shrink-0 font-medium text-inchiostro">{euro(conto.polar)}</span>
+            <span>Stripe per pratica: ~5% + 0,25 € (Managed Payments, carta europea)</span>
+            <span className="numeri shrink-0 font-medium text-inchiostro">{euro(conto.cassa)}</span>
           </li>
           <li className="text-[12.5px] text-fumo-2">
             <span className="numeri">*</span> Garanzia al {pct(TASSO_RIMBORSO_GARANZIA)}: stima
