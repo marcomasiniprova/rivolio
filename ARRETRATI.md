@@ -13,14 +13,14 @@ stato fatto o senza che Valerio dica di lasciar perdere.**
 | # | Cosa | Perché è qui |
 |---|---|---|
 | A | ~~Le pagine evento~~ | ✅ **CHIUSA il 9/08, giro #41.** Valerio ha capito la differenza col blog e ha detto di farle: online tutte e tre le famiglie (`/sciopero-aerei`, `/sciopero-aerei/<data>`, `/aeroporto/<sigla>`), in sitemap, col check dentro. |
-| A0 | 🔴 **Polar ha rifiutato il caso d'uso, e non è solo Polar** | Il controllo automatico risponde "Use case not supported": categoria reclami di viaggio, a restrizione. **Ricerca fatta l'11/08 aprendo le quattro pagine ufficiali** (in `PAGAMENTI.md`): hanno tutti una riga che ci prende, Polar e Paddle *"Travel Services"*, Lemon Squeezy *"legal / debt-relief / collections"*, Dodo *"document preparation"*. **La categoria è chiusa sullo scaffale standard**, quindi il problema non era il testo dell'iscrizione. **Non si riscrive la descrizione per passare il controllo automatico**: alla verifica guardano il sito vero e i bonifici si bloccano coi soldi dei clienti dentro. I due argomenti da fare a un essere umano e il motivo per cui il primo da provare è **Paddle** stanno nel file. Decisione di Valerio. |
+| A0 | ✅ ~~**Polar ha rifiutato il caso d'uso**~~ | **CHIUSA il 22/08: si incassa con Stripe Managed Payments.** Polar aveva risposto "Use case not supported" (categoria reclami di viaggio, a restrizione). Invece di cercare un altro merchant of record dello stesso scaffale, si è passati a Stripe Managed Payments: anche lui MoR (niente partita IVA per incassare), ma aperto. Live in modalità test. |
 | A1 | 🟡 **`EXPO_PUBLIC_CHECK_PREZZO_ATTIVO` va tenuta allineata a mano** | L'app ha il suo interruttore per i testi perché Expo non legge le variabili senza quel prefisso (stesso difetto della landing, giro #52). Due variabili che devono dire la stessa cosa sono due variabili che prima o poi non la dicono: se il muro è acceso sul sito e questa è spenta, l'app promette gratis e poi mostra il muro. ⚠️ Cambiarla non basta: l'app va **riesportata** (`npm run anteprima` dentro `mobile/`), perché quel testo si decide quando l'app viene costruita. Il giorno degli store, questa diventa una voce della lista di rilascio. |
-| A3 | 🔴 **LA CASSA DI PROVA È APERTA A TUTTI, e va spenta il giorno del venditore** | Dall'11/08 il bottone del muro porta alla cassa finta **per chiunque** (decisione di Valerio: doveva poter provare il giro da qualsiasi telefono). Vuol dire che chi la trova sblocca un'analisi gratis. Oggi non c'è niente da rubare, ma **è la prima cosa da fare quando arriva l'incasso vero**: si toglie `CASSA_PROVA_SEGRETO` da Netlify e pagina e rotta spariscono (404) da sole. |
+| A3 | ✅ ~~**La cassa di prova aperta a tutti**~~ | **CHIUSA il 22/08: la cassa finta non esiste più.** Cancellati pagina, rotte e chiave (`/cassa-prova` risponde 404). Il muro del check porta ora a Stripe. Non c'è più una cassa finta da spegnere. |
 | A4 | 🟡 **La ricevuta del check vive in UN browser solo** | È un cookie di 30 giorni: regge il ricaricamento, la chiusura del sito, lo spegnimento del telefono. **Non regge il cambio di dispositivo.** Chi paga dal telefono e poi apre il sito dal computer non ritrova la sua analisi. È il prezzo della scelta "zero frizione, niente account": legarla a un'email vorrebbe dire chiedere l'email prima di far provare, che è la frizione che il prodotto evita. Da riaprire quando ci sono clienti veri e si può misurare quanto capita: la via di mezzo è mandare un link di recupero SOLO a chi lascia l'email dopo aver pagato. |
-| A10 | 🟡 **`text-errore` è invisibile anche fuori dal pannello** | In `app/globals.css` il token `--color-errore` **non esiste**, quindi Tailwind non genera la classe `text-errore` e chi la usa scrive del colore del testo intorno. Trovato l'11/08 rifacendo il pannello: là è stato corretto. **Resta in `components/rivolio/CassaProva.tsx`**, dove marca un messaggio d'errore che l'utente dovrebbe vedere rosso e vede grigio. Due strade: definire il token in `globals.css` (e allora si sistemano tutti in un colpo, ma va scelto il rosso giusto per la palette) oppure sostituirlo dove capita. ⚠️ È il genere di difetto che nessuno trova guardando, perché la pagina sembra a posto: sembra solo *meno urgente* di com'è. |
-| A8 | 🟡 **Stripe Managed Payments: aperto o no per l'Italia?** | È merchant of record come Polar (niente partita IVA per incassare) e costa uguale a Lemon Squeezy, 5% + 0,50. Ma le fonti dell'11/08 dicono beta chiusa, rollout per paese, e review dell'account prima dell'accesso. **Da qui `stripe.com` è bloccato dal proxy**, quindi non l'ho letto sulla fonte ufficiale. Valerio apre `stripe.com/managed-payments` dal suo PC e guarda due cose: il bottone dice *Get started* o *Join the waitlist*, e l'Italia compare fra i paesi. Se è aperto diventa la strada migliore; se non lo è, ci si mette in lista (costa zero) e si resta su Paddle e Dodo. |
+| A10 | 🟡 **`text-errore` non è definito come token** | In `app/globals.css` il token `--color-errore` **non esiste**, quindi Tailwind non genera la classe `text-errore` e chi la usa scrive del colore del testo intorno. Trovato l'11/08 rifacendo il pannello: là è stato corretto. ⚠️ L'istanza dentro `CassaProva.tsx` è sparita col file (cassa di prova cancellata il 22/08). Se `text-errore` compare ancora da qualche parte, o si definisce il token in `globals.css` o si sostituisce dove capita. |
+| A8 | ✅ ~~**Stripe Managed Payments: aperto per l'Italia?**~~ | **CHIUSA il 22/08: aperto e attivo.** L'account è configurato, il checkout è vivo in modalità test. Resta il passaggio da test a live (chiavi `sk_live_`) e un pagamento vero end-to-end. |
 | A9 | ✅ ~~Lemon Squeezy, la quarta email~~ | **CHIUSA l'11/08: non si manda.** Stripe l'ha comprata e i clienti stanno migrando su Stripe Managed Payments; in più il loro elenco ci vieta due volte (*"legal / debt-relief / collections"* e *"services of any kind"*). Era la porta più stretta delle quattro, e sta anche chiudendo. |
-| A7 | 🟡 **Il test dei due prezzi è spento, e va riacceso col venditore** | `TEST_DUE_PREZZI = false` in `lib/prezzi.ts` (11/08, scelta di Valerio): serviva a far diventare **statica** la landing, che è la leva più grossa sulla velocità. Il meccanismo è tutto lì e si riaccende con una parola. ⚠️ Il giorno che si riaccende servono anche i **quattro** prodotti su Polar (o su chi per lui) e i due link della variante B: senza, il sito serve il listino basso a tutti e il test non parte. E va rifatto il controllo sul cookie da sei mesi, che è la crepa trovata spegnendolo. |
+| A7 | 🟡 **Il test dei due prezzi è spento, e va riacceso quando serve** | `TEST_DUE_PREZZI = false` in `lib/prezzi.ts` (11/08, scelta di Valerio): serviva a far diventare **statica** la landing, che è la leva più grossa sulla velocità. Il meccanismo è tutto lì e si riaccende con una parola. ⚠️ Con Stripe il prezzo della variante si costruisce nel codice (`price_data` inline), quindi non servono prodotti preconfigurati: basta riaccendere la logica della variante. E va rifatto il controllo sul cookie da sei mesi, che è la crepa trovata spegnendolo. |
 | A5 | 🟡 **Il TIN aspetta due variabili di Telegram** | Il cruscotto (`/admin/cruscotto`) gira da subito e non chiede niente; le notifiche invece non partono finché su Netlify non ci sono `TELEGRAM_BOT_TOKEN` e `TELEGRAM_ADMIN_CHAT`. Non è un guasto e non rompe niente (`tin` risponde `false` e si va avanti), ma **fino ad allora un pagamento arrivato di notte non lo sa nessuno fino al mattino**. I tre minuti per farlo sono in `STATO.md`, voce 0-prima. |
 | A6 | 🟡 **Il cruscotto conta le visite con un segno nel browser** | Una visita = una scheda aperta, segnata in `sessionStorage`. Chi naviga in incognito con l'archivio bloccato viene contato a ogni pagina, e chi torna il giorno dopo conta come persona nuova (è voluto: non teniamo niente che permetta di riconoscerlo). Vuol dire che **il numero delle visite è una misura di traffico, non di persone**, e va letto così quando si giudica un video. Se un giorno servisse la precisione vera servirebbe un identificativo persistente, cioè esattamente la cosa che la privacy promette di non fare. |
 | A2 | **Il primo giro a mano dell'autopilot scioperi** | Il modulo che tiene viva la tabella è scritto e il suo filtro è coperto da prove, ma da qui il proxy non apre nessuna delle fonti: il primo scarico vero avviene su Netlify. Valerio apre una volta `/api/motore/scioperi?segreto=...` e guarda l'esito. Se si rompe, manda un'email da solo. |
@@ -309,9 +309,9 @@ non altro codice.**
 **Tocca a Valerio (in ordine di soldi):**
 1. Deploy dell'ultimo giro (design + Osservatorio dati veri): pubblichi tu,
    tua scelta col popup. Il motore online funziona già.
-2. Prodotti Polar + checkout link + segreto webhook + approvazione org.
-3. ~~Chiavi su Netlify~~ FATTE tutte e 4 (Supabase, Resend, Mistral tue;
-   AeroDataBox messa via connettore l'8/08): resta solo Polar quando ci sarà.
+2. ✅ Cassa Stripe: chiavi su Netlify, live in test. Resta un pagamento vero end-to-end e il passaggio da test a live.
+3. ~~Chiavi su Netlify~~ FATTE (Supabase, Resend, Mistral, AeroDataBox e
+   Stripe): tutte configurate.
 4. Riverificare gli scioperi sul cruscotto MIT dal tuo PC (la sandbox non
    lo apre) · Open-Meteo Professional (~99 USD/mese) SOLO quando vorrai la
    riga meteo nel reclamo: fino ad allora resta spenta per scelta.
@@ -373,15 +373,16 @@ non altro codice.**
 ## 📌 COSE CHE VALGONO SEMPRE
 
 - **Obiettivo: fare cassa entro ottobre 2026.** Ogni scelta si giudica così.
-- **Prodotto: Rivolio**, lo scanner dei rimborsi EU261. Check gratis,
-  pratica 14,90€, famiglia 24,90€, garanzia 90 giorni. **Chiuso.**
+- **Prodotto: Rivolio**, lo scanner dei rimborsi EU261. Check 1,99
+  (interruttore), pratica 16,90€, famiglia 29,90€, garanzia legata
+  all'esito. **Chiuso.**
 - **Nome: Rivolio**, per esteso. Tagline: *Riprenditi i soldi che ti devono.*
 - **L'incerto non si vende MAI. I falsi positivi sono 0, bloccante.**
 - **Web-first**: il check e l'incasso stanno sul web; l'app mobile è il
   tracker post-pagamento, non la porta d'ingresso.
-- Bianco e verde. **Polar**, non Stripe (niente partita IVA fino a 10k/mese:
-  da confermare col commercialista, il documento stesso lo chiede).
-- **Ti servono:** chiave AeroDataBox, prodotti Polar, dominio, account social.
+- Bianco e verde. **Stripe Managed Payments** (niente partita IVA fino a
+  ~10k/mese: da confermare col commercialista, il documento stesso lo chiede).
+- **Ti servono:** chiave AeroDataBox, chiavi Stripe, dominio, account social.
 - **Come vuoi che lavori:** tutte le cose chieste in una seduta, domande mentre
   si lavora e non al posto di lavorare, aggiornandoti su dove siamo.
 
