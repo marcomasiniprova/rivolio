@@ -99,6 +99,13 @@ export async function creaSessioneCheckout(opts: {
           price_data: {
             currency: "eur",
             unit_amount: inCentesimi(opts.euro),
+            /* L'IVA sta DENTRO il prezzo, non sopra (Valerio, 23/08: il check
+               usciva 2,43 invece di 1,99). Senza questa riga Managed Payments
+               tratta il prezzo come IVA esclusa e la aggiunge sopra. Con
+               "inclusive" il numero e' quello FINALE che paga il cliente, e
+               Stripe ci tira fuori l'IVA da dentro: e' anche l'unico modo lecito
+               per il B2C in Italia. */
+            tax_behavior: "inclusive",
             product_data: {
               name: opts.nomeProdotto,
               ...(opts.descrizione ? { description: opts.descrizione } : {}),
