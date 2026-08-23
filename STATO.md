@@ -7,7 +7,7 @@
 > (Polar ha detto no; lo shadow è stato tolto). Lo stato vero e aggiornato
 > sta in `INIZIA-QUI.md`, non nei giri datati.
 
-**Aggiornato:** 2026-08-23 (giro #91: POLAR E CASSA FINTA ESTINTI, lo
+**Aggiornato:** 2026-08-23 (giro #92: la pulizia del repo a Stripe, e il "controlla la mail" che compariva anche da loggato · giro #91: POLAR E CASSA FINTA ESTINTI, lo
 scanner fantasma chiuso, il creator col bottone «gratis», e i margini rifatti
 su Stripe. Lo scanner fantasma sparito dalla pagina del verdetto; Polar e la
 cassa di prova tolti da ogni file (rotte, componenti, colonna DB rinominata);
@@ -98,6 +98,45 @@ campo email dell'Osservatorio non più schiacciato sul telefono, immagine
 social rifatta (era rimasta al prodotto viaggi).
 
 ## Dove siamo
+- **GIRO #92 (23/08): LA PULIZIA DEL REPO A STRIPE, E IL "CONTROLLA LA MAIL"
+  CHE COMPARIVA ANCHE DA LOGGATO.** Due richieste di Valerio: aggiornare
+  tutto il repo (via il morto, sistemato il falso), e un bug vero visto
+  pagando dal suo account.
+  - **REPO SETACCIATO, 7 commit.** Cancellati 4 file morti dell'era Polar
+    (`PAGAMENTI.md`, `docs/POLAR.md`, `docs/POLAR-PASSO-PASSO.md`,
+    `docs/EMAIL-VENDITORI.md`). Corretto il falso ovunque diceva ancora
+    Polar, "la cassa non esiste", cassa di prova, 14,90/24,90 o "garanzia
+    90 giorni": CLAUDE, PROGETTO, SPEC, MOTORE, DECISIONI, ARRETRATI,
+    LANCIO, INIZIA-QUI, PIANO e altri dicono ora la verità (Stripe, cassa
+    viva, 16,90/29,90, garanzia legata all'esito). Due commenti "commissione
+    30%" corretti a 40% (il default vero della colonna
+    `commissione_percento`). STATO e ISPEZIONE lasciati intatti: sono diari
+    datati, storia.
+  - 🔴 **DOPO IL PAGAMENTO, "CONTROLLA LA MAIL" ANCHE DA LOGGATO.** Valerio
+    fa il check dal suo account, paga, e la pagina di arrivo
+    (`/pratica/pronta`, il success_url di Stripe) gli diceva ancora "ti
+    abbiamo mandato l'accesso per email". Quel giro serve SOLO a chi NON è
+    loggato (il check non ha account, uno può mettere l'email di un altro,
+    e mandare l'accesso nella posta impedisce il furto d'account), ma la
+    pagina non guardava MAI la sessione. Adesso è consapevole:
+    `lib/pratiche/pronta.ts` (decisione pura) decide sulla sola email.
+    Loggato con la stessa email che ha pagato → dritto alla pratica (o "un
+    attimo, la preparo" con auto-aggiornamento se il webhook è un secondo
+    indietro). Non loggato, o loggato con un'ALTRA email (pagato per un
+    altro) → il giro della mail sicura, invariato. La pagina della pratica
+    ricontrolla comunque la proprietà, quindi mandare dritto è sicuro. 7
+    prove nuove (`prove/pronta.spec.ts`), 14 verdi (desktop + telefono).
+  - **CACCIA COMPLETA (scelta di Valerio) ai cugini del bug**, cioè dove
+    trattiamo un loggato da sconosciuto: il verdetto NON chiede la mail se
+    sei loggato (`emailAccount`, già giusto), l'incerto nemmeno, e i
+    redirect a `/entra` sono tutti veri "non sei loggato". `/pratica/pronta`
+    era l'unica pecora fuori dal recinto: nata dopo, con la cassa Stripe, e
+    mai allineata.
+  - ⚠️ **Verifica onesta**: la prova pura della decisione è verde (14/14) e
+    tsc non segnala niente sui file nuovi. Il `verify` pieno (build, lint,
+    intera suite) NON è girato in questo ambiente: manca il pacchetto
+    `stripe` nel node_modules del container (c'è su Netlify) e il `.next` è
+    stantio. Gli errori tsc sono solo quelli, ambientali e preesistenti.
 - **GIRO #91 (23/08): POLAR ESTINTO, LO SCANNER FANTASMA CHIUSO, IL CREATOR
   GRATIS ANCHE NEL BOTTONE, E I MARGINI SU STRIPE.** Valerio dopo un giro da
   utente: «lo scanner fantasma per 2 millisecondi quando riapro il link
