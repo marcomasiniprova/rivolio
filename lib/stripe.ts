@@ -42,6 +42,17 @@ export function modalitaStripe(): "test" | "live" | "assente" {
 }
 
 /**
+ * Managed Payments (Stripe come merchant of record) sulla cassa: versa lui
+ * l'IVA in 80+ paesi, ed è la ragione per cui si incassa senza partita IVA.
+ * Acceso di default. `MANAGED_PAYMENTS_ATTIVO=0` su Netlify lo spegne e la
+ * cassa torna allo Stripe standard, senza toccare il codice: è la rete di
+ * sicurezza per il giorno del live.
+ */
+export function managedPaymentsAttivo(): boolean {
+  return process.env.MANAGED_PAYMENTS_ATTIVO !== "0";
+}
+
+/**
  * Il client Stripe. Lancia se la chiave manca: chi chiama deve prima
  * chiedere `stripeAttivo()` e, se è spento, mostrare la strada di riserva.
  */
@@ -90,7 +101,9 @@ export async function creaSessioneCheckout(opts: {
   cancelUrl: string;
 }): Promise<string | null> {
   try {
-    const sessione = await stripe().checkout.sessions.create({
+    const parametri: Stripe.Checkout.SessionCreateParams & {
+      managed_payments?: { enabled: boolean };
+    } = {
       mode: "payment",
       locale: "it",
       line_items: [
@@ -133,7 +146,14 @@ export async function creaSessioneCheckout(opts: {
       metadata: opts.metadata,
       success_url: opts.successUrl,
       cancel_url: opts.cancelUrl,
-    });
+    };
+    /* MANAGED PAYMENTS: con questo Stripe fa da merchant of record su questa
+       cassa (versa lui l'IVA), ed è la ragione per cui si incassa senza
+       partita IVA. Acceso di default; MANAGED_PAYMENTS_ATTIVO=0 lo spegne e la
+       cassa torna allo Stripe standard. La versione API richiesta da Stripe
+       (2025-03-31.basil o successiva) è già coperta dal pacchetto stripe 22.5. */
+    if (managedPaymentsAttivo()) parametri.managed_payments = { enabled: true };
+    const sessione = await stripe().checkout.sessions.create(parametri);
     return sessione.url;
   } catch (e) {
     const motivo = e instanceof Error ? e.message : String(e);
