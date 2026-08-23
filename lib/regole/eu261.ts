@@ -214,7 +214,7 @@ export function valuta(f: FattoVolo): Verdetto {
   const nienteDiArrivo = !arrivo.iata && !arrivo.paese && !arrivo.icao;
   if (f.stato === "sconosciuto" && nienteDiPartenza && nienteDiArrivo) {
     return incerto(
-      "Non abbiamo trovato dati affidabili su questo volo. Controlla numero e data; se sono giusti, riprova più tardi.",
+      "Non abbiamo ancora un dato certo su questo volo. Di solito è una di due cose: è troppo recente e l'orario ufficiale di atterraggio arriva tra un paio di giorni, oppure il numero non è quello esatto (lo trovi sulla carta d'imbarco). Lascia la mail qui sotto e ti avvisiamo appena il dato regge.",
     );
   }
 
@@ -241,7 +241,7 @@ export function valuta(f: FattoVolo): Verdetto {
 
   if (f.stato === "sconosciuto") {
     return incerto(
-      "Non abbiamo trovato dati affidabili su questo volo. Controlla numero e data; se sono giusti, riprova più tardi.",
+      "Non abbiamo ancora un dato certo su questo volo. Di solito è una di due cose: è troppo recente e l'orario ufficiale di atterraggio arriva tra un paio di giorni, oppure il numero non è quello esatto (lo trovi sulla carta d'imbarco). Lascia la mail qui sotto e ti avvisiamo appena il dato regge.",
     );
   }
 
