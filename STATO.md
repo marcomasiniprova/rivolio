@@ -7,7 +7,14 @@
 > (Polar ha detto no; lo shadow è stato tolto). Lo stato vero e aggiornato
 > sta in `INIZIA-QUI.md`, non nei giri datati.
 
-**Aggiornato:** 2026-08-22 (giro #90: LA CASSA VERA È STRIPE. Il check e la
+**Aggiornato:** 2026-08-23 (giro #91: POLAR E CASSA FINTA ESTINTI, lo
+scanner fantasma chiuso, il creator col bottone «gratis», e i margini rifatti
+su Stripe. Lo scanner fantasma sparito dalla pagina del verdetto; Polar e la
+cassa di prova tolti da ogni file (rotte, componenti, colonna DB rinominata);
+il check è su Stripe come la pratica (provato dal vivo: rimanda a
+checkout.stripe.com); il bottone del creator dice «gratis»; economia rifatta
+su Stripe Managed Payments (~5% + 0,25, commissione creator 40%). 1868 prove
+verdi, verificate a shard.) · giro #90: LA CASSA VERA È STRIPE. Il check e la
 pratica passano da Stripe (Managed Payments = merchant of record, versa
 l'IVA al posto nostro: risolve la partita IVA che non c'è); il sistema
 affiliati (link + codice, cookie 60 giorni, sconto 10% al cliente,
@@ -91,6 +98,64 @@ campo email dell'Osservatorio non più schiacciato sul telefono, immagine
 social rifatta (era rimasta al prodotto viaggi).
 
 ## Dove siamo
+- **GIRO #91 (23/08): POLAR ESTINTO, LO SCANNER FANTASMA CHIUSO, IL CREATOR
+  GRATIS ANCHE NEL BOTTONE, E I MARGINI SU STRIPE.** Valerio dopo un giro da
+  utente: «lo scanner fantasma per 2 millisecondi quando riapro il link
+  dell'email; togli ogni traccia di Polar e della cassa finta, il muro sempre
+  ma con Stripe; controlla infra; calcolami i margini per bene». Fatto a
+  pezzi, ognuno verde e online prima del prossimo.
+  - 🔴 **LO SCANNER FANTASMA, CHIUSO DEFINITIVAMENTE.** Aprendo la pratica non
+    pagata dal link dell'email, per un lampo compariva la scena dell'analisi e
+    poi spariva. La pagina del verdetto rifaceva il «velo» dell'analisi a ogni
+    arrivo che non venisse dal check dell'hero (link email, segnalibro). Ma il
+    teatro vero l'analisi ce l'ha già all'hero (SchedaCheck): sul verdetto era
+    un doppione che lampeggiava. **Tolto del tutto**: il verdetto si mostra
+    subito, da qualunque parte arrivi. Fine della serie di rattoppi (ZZ777, il
+    velo che restava, i pallini). La prova lo vieta per sempre.
+  - 🟢 **POLAR E LA CASSA FINTA ESTINTI DA OGNI FILE** (richiesta netta di
+    Valerio). Tolti: `lib/polar.ts` e il webhook `/api/polar`; `/cassa-prova`
+    e `CassaProva.tsx`; le rotte del collaudo (`/api/check/prova`,
+    `/api/pratiche/prova`, la chiave del collaudatore); `cassaDiProvaAperta`,
+    `inCollaudo`, `collaudoAperto`; i flag cassaProva/collaudo dalla pagina del
+    verdetto; le variabili `CASSA_PROVA_SEGRETO`/`COLLAUDO_APERTO` dal pannello
+    (al loro posto `STRIPE_SECRET_KEY` e `STRIPE_WEBHOOK_SECRET`). Il checkout
+    di pratica e check è **Stripe puro**: se la chiave manca si torna ai
+    prezzi, mai a una cassa finta. Ultima traccia nel modello dati: la colonna
+    `pratiche.polar_ordine` rinominata `ordine_pagamento` (migrazione sul DB
+    vero, dati preservati). Grep finale: **Polar estinto**.
+  - ✅ **IL CHECK È SU STRIPE COME LA PRATICA, PROVATO DAL VIVO.** Valerio
+    aveva testato solo la pratica. Verificato sul sito vero: `GET
+    /api/check/checkout` risponde **303 → checkout.stripe.com/c/pay/cs_test_…**
+    (il check apre una sessione Stripe da 1,99), e `/cassa-prova` risponde
+    **404** (la cassa finta non c'è più). Il muro resta sull'interruttore,
+    sempre acceso (scelta di Valerio).
+  - 🟢 **IL CREATOR HA IL BOTTONE «GRATIS».** Prima un account creator vedeva
+    «Prepara la pratica a 16,90€» e poi la pratica gli si apriva gratis lo
+    stesso. Ora, se chi guarda è un creator, al posto del prezzo c'è «Apri la
+    pratica, gratis» (e la famiglia), calcolato lato server solo per gli
+    idonei.
+  - ✅ **CONTROLLO INFRA (allineato col nuovo assetto).** Supabase: colonne e
+    tabelle a posto (`creator`, `ordine_pagamento`, `affiliati`, `commissioni`),
+    advisor di sicurezza tutti INFO (le tabelle server-only le legge solo la
+    chiave di servizio, è voluto). Resend: `send.rivolio.it` verificato, invio
+    attivo. Netlify: sito vivo su rivolio.it, deploy pronto, il check→Stripe
+    gira dal vivo.
+  - 🟢 **I MARGINI RIFATTI SU STRIPE** (`/admin/economia`). La cassa è **Stripe
+    Managed Payments** (merchant of record): ~5% + 0,25 € a transazione per una
+    carta europea (3,5% del servizio MoR + incasso carta; fonte support.stripe
+    .com), versa l'IVA al posto nostro (funziona **senza partita IVA**).
+    Commissione creator **40%**. Su 10.000€ di vendite dai creator: a Valerio
+    ~3.500€, ai creator ~4.000€ in tutto, IVA ~1.800€ (la versa Stripe),
+    Stripe ~660€. Mai in negativo. ⚠️ L'imposta sul reddito del netto è da
+    commercialista (Valerio non ha partita IVA).
+  - Prove: **verify verde, 1868 prove** (verificate a due shard: 931 + 931; la
+    suite intera in un colpo fa cadere il dev server locale dopo 6 minuti, un
+    limite dell'ambiente, non del codice). tipi 0, lint 0 errori.
+  - ⚠️ **SERVE VALERIO:** su Netlify aggiungi **`STRIPE_WEBHOOK_SECRET`** (prima
+    quello di test, poi live) e fai **un pagamento di prova** con una carta
+    test Stripe per chiudere il giro pagamento → pratica. Le variabili della
+    cassa finta le hai già tolte. Al commercialista: conferma il codice fiscale
+    prodotto (`txcd_10701411`).
 - **GIRO #90 (22/08): LA CASSA VERA È STRIPE, GLI AFFILIATI, E I CREATOR
   GRATIS A VITA.** Valerio va al mercato con gli incassi veri: «parti dal
   check a Stripe, poi al creator do il 40% a tutti, checkout perfetto senza
