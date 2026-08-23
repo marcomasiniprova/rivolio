@@ -10,7 +10,7 @@
  *
  * La cosa che questo conto rende ovvia, ed è la più importante: l'infra-
  * struttura costa pochissimo. I due costi che contano davvero sono la
- * commissione di chi incassa (Polar) e la garanzia. Il resto (dati volo,
+ * commissione di chi incassa (Stripe) e la garanzia. Il resto (dati volo,
  * OCR, email, Supabase, Netlify) è spiccioli. Quindi la profittabilità NON
  * dipende dai costi tecnici: dipende da quanta gente arriva e da quanti
  * reclami vanno a buon fine.
