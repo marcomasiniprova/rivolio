@@ -111,4 +111,15 @@ test.describe("I creator gratis a vita", () => {
     // E la apre a prezzo zero, mai a un prezzo qualsiasi.
     expect(r).toContain("prezzo_pagato: 0");
   });
+
+  test("sul verdetto il bottone del creator dice «gratis», e ha la precedenza sul prezzo", () => {
+    const risultato = leggi("components/verifica/Risultato.tsx");
+    // Il creator viene prima del credito e del pagamento: bottone gratis.
+    expect(risultato).toContain("AcquistoDaCreatore");
+    expect(risultato).toMatch(/dati\.creatore\s*\?/);
+    // Il flag lo calcola il server solo per gli idonei, dall'account (non dal browser).
+    const contenuto = leggi("app/verifica/contenuto.tsx");
+    expect(contenuto).toContain("creatorePerId");
+    expect(contenuto).toMatch(/riga\.esito === "idoneo"[\s\S]{0,80}creatorePerId/);
+  });
 });

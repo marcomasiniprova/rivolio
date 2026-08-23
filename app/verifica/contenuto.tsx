@@ -17,6 +17,7 @@ import { SERVIZIO_ATTIVO, supabaseServizio } from "@/lib/supabase/servizio";
 import { SUPABASE_CONFIGURATO } from "@/lib/supabase/chiavi";
 import { utenteCollegato } from "@/lib/supabase/server";
 import { creditoDisponibile } from "@/lib/pratiche/credito";
+import { creatorePerId } from "@/lib/affiliati/creatore";
 import { demo as fornitoreDemo } from "@/lib/voli/fornitori/demo";
 import { normalizzaData, normalizzaVolo } from "@/lib/voli/normalizza";
 
@@ -289,6 +290,11 @@ export async function contenutoVerifica(
       ? await creditoDisponibile(utente.id)
       : { singola: false, famiglia: false };
 
+  /* Account creator (gratis a vita): sul verdetto idoneo il bottone dice
+     «gratis» invece del prezzo, e apre la pratica senza pagare. Solo per gli
+     idonei, come tutto il resto: sul giallo non si apre niente. */
+  const creatore = Boolean(utente && riga.esito === "idoneo" && (await creatorePerId(utente.id)));
+
   const { listino: listinoPieno } = await listinoCorrente();
   const cassePronte = checkoutConfigurato();
   const venditoreVero = cassePronte.singola || cassePronte.famiglia;
@@ -334,6 +340,7 @@ export async function contenutoVerifica(
         : null,
     checkout: cassePronte,
     credito,
+    creatore,
     avvisoCheckout,
   };
 

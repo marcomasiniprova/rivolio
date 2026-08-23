@@ -99,6 +99,12 @@ export type DatiVerifica = {
    * un credito famiglia. Il server ricontrolla: qui è solo l'esperienza.
    */
   credito: { singola: boolean; famiglia: boolean };
+  /**
+   * Chi guarda è un account creator (gratis a vita). Al posto del prezzo, il
+   * bottone dice «gratis» e apre la pratica senza pagare. Il server
+   * ricontrolla il flag: qui è solo come si presenta il bottone.
+   */
+  creatore?: boolean;
   /** Rimbalzo dalla rotta di checkout: cosa dire e perché. */
   avvisoCheckout: "demo" | "non-attivo" | "errore" | "recesso" | null;
 };
@@ -578,7 +584,10 @@ function Idoneo({ dati, importo }: { dati: DatiVerifica; importo: number }) {
                 {testoAvviso}
               </p>
             )}
-            {dati.credito.singola ? (
+            {dati.creatore ? (
+              /* Account creator: gratis a vita, niente prezzo e niente cassa. */
+              <AcquistoDaCreatore dati={dati} />
+            ) : dati.credito.singola ? (
               /* Ha un credito della garanzia: apre gratis, niente pagamento. */
               <AcquistoColCredito dati={dati} />
             ) : compraSingola ? (
@@ -880,6 +889,45 @@ function AcquistoColCredito({ dati }: { dati: DatiVerifica }) {
       )}
       <p className="text-center text-sm leading-relaxed text-fumo">
         La garanzia ti aveva lasciato un credito: questa pratica è su di noi, non paghi niente.
+      </p>
+    </div>
+  );
+}
+
+/* ------------------- account creator: pratica gratis a vita ---------- */
+
+/**
+ * Al posto del prezzo, quando chi guarda è un account creator (gratis a vita).
+ * Apre la stessa rotta di checkout, che riconosce il creator lato server e fa
+ * nascere la pratica gratis, senza cassa e senza la spunta del recesso (una
+ * pratica gratis non è un acquisto). È un form GET, non un `Link`: così il
+ * browser non lo prefetcha e la pratica nasce solo con un clic vero.
+ */
+function AcquistoDaCreatore({ dati }: { dati: DatiVerifica }) {
+  const azione = "/api/pratiche/checkout";
+  return (
+    <div className="flex flex-col gap-2.5">
+      <form method="get" action={azione}>
+        <input type="hidden" name="verifica" value={dati.idPagina} />
+        <input type="hidden" name="tipo" value="singola" />
+        <Button type="submit" size="lg" className="h-auto w-full py-4 text-base">
+          Apri la pratica, gratis
+        </Button>
+      </form>
+      <form method="get" action={azione}>
+        <input type="hidden" name="verifica" value={dati.idPagina} />
+        <input type="hidden" name="tipo" value="famiglia" />
+        <Button
+          type="submit"
+          variant="contorno"
+          size="lg"
+          className="h-auto w-full whitespace-normal py-3.5 text-center text-[0.95rem]"
+        >
+          Eravate in più sullo stesso volo? Apri la pratica famiglia, gratis
+        </Button>
+      </form>
+      <p className="text-center text-sm leading-relaxed text-fumo">
+        Il tuo account creator è gratis a vita: questa pratica non la paghi.
       </p>
     </div>
   );

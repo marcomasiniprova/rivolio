@@ -39,6 +39,23 @@ export async function utenteCreatore(req: Request): Promise<UtenteCreatore | nul
   }
 }
 
+/** Il flag creator per un id utente già noto (senza rileggere la sessione). */
+export async function creatorePerId(userId: string): Promise<boolean> {
+  if (!SERVIZIO_ATTIVO || !userId) return false;
+  try {
+    const db = supabaseServizio();
+    const { data } = await db
+      .from("profili")
+      .select("creator")
+      .eq("id", userId)
+      .maybeSingle<{ creator: boolean | null }>();
+    return data?.creator === true;
+  } catch (e) {
+    console.error("[creatore] lettura flag per id fallita:", e);
+    return false;
+  }
+}
+
 /* ------------------------------------------------------ pannello admin */
 
 /**
