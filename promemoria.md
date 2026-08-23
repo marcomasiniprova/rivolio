@@ -4,7 +4,7 @@ Il mio blocco note condiviso. Qui segno le cose da fare, mie e tue, e a ogni
 giro ti ricordo quelle tue ancora aperte. Le spiegazioni sono in parole
 semplici, come piace a te.
 
-Aggiornato: 2026-08-15.
+Aggiornato: 2026-08-23.
 
 ---
 
@@ -104,10 +104,10 @@ per reggerle è già a posto o pronto; queste sono configurazioni.
 - **Supabase, una spunta:** Authentication, Policies, accendi "Leaked
   password protection". Impedisce che qualcuno apra un account con una
   password già rubata. Dieci secondi.
-- **Pagamenti:** Polar ha detto no alla categoria. Serve la tua decisione fra
-  le tre strade in `PAGAMENTI.md` (revisione umana, un altro venditore,
-  oppure partita IVA + Stripe diretto). Finché non c'è un incassatore, il
-  check resta gratis e il traffico si costruisce lo stesso.
+- **Pagamenti: FATTO, la cassa è Stripe.** Stripe Managed Payments (merchant
+  of record: versa l'IVA al posto nostro, niente partita IVA). Check e pratica
+  si pagano davvero, prezzi finali IVA inclusa. Restano solo
+  `STRIPE_WEBHOOK_SECRET` su Netlify e un pagamento di prova con carta test.
 - **Dominio email:** verifica `send.rivolio.it` su Resend e metti
   `RESEND_MITTENTE = "Valerio dal team di Rivolio <team@send.rivolio.it>"`.
   Finché non è verificato, le email partono solo verso valerio@artecai.it.

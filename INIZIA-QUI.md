@@ -18,7 +18,7 @@ Prende i soldi che le compagnie aeree devono ai passeggeri (Regolamento CE
 261/2004: ritardo di 3 ore o più, volo cancellato, negato imbarco,
 coincidenza persa, declassamento). Flusso: **check del volo a pagamento**
 (1,99 di lancio, si scala dalla pratica) → **verdetto** a tre stati da un
-motore deterministico (idoneo / incerto / non idoneo) → **pratica** a 14,90
+motore deterministico (idoneo / incerto / non idoneo) → **pratica** a 16,90
 con la lettera di reclamo pronta → follow-up, replica ai no, conciliazione.
 Tagline: *Riprenditi i soldi che ti devono.* Dominio ufficiale:
 **rivolio.it**. Online su Netlify.
@@ -29,10 +29,12 @@ Tagline: *Riprenditi i soldi che ti devono.* Dominio ufficiale:
 > ACCESO.** I documenti più vecchi e i giri di `STATO.md` dicono spesso
 > "check gratis": era vero quando l'interruttore era spento, non adesso.
 > Per lo stato VERO leggi la variabile su Netlify col connettore, non
-> fidarti della prosa. ⚠️ E oggi non c'è ancora un incassatore vero (Polar
-> ha detto no): il 1,99 si VEDE ma dietro c'è la cassa di prova, non un
-> pagamento reale. Chi lascia una recensione riceve un codice `RIV-XXXXX`
-> che sblocca UNA analisi gratis (`lib/recensioni`).
+> fidarti della prosa. ✅ E LA CASSA È VERA: **Stripe Managed Payments**
+> (merchant of record: versa l'IVA al posto nostro, funziona senza partita
+> IVA). Check e pratica si pagano davvero, e i prezzi mostrati sono FINALI,
+> IVA inclusa (1,99 e 16,90 tondi). La cassa di prova e Polar sono stati
+> tolti. Chi lascia una recensione riceve un codice `RIV-XXXXX` che sblocca
+> UNA analisi gratis (`lib/recensioni`).
 
 ## 2. Come parti in locale
 
@@ -107,8 +109,9 @@ ZZ, ogni risposta marcata `demo`).
 
 - **`STATO.md`** — il diario giro per giro (lungo). L'ultimo in cima.
 - **`promemoria.md`** — le cose da fare, sue e mie.
-- **`ARRETRATI.md`**, **`LANCIO.md`**, **`PAGAMENTI.md`** — code e decisioni
-  aperte (Polar ha detto no: alternative in `PAGAMENTI.md`).
+- **`ARRETRATI.md`**, **`LANCIO.md`** — code e decisioni aperte. La cassa è
+  **Stripe** (deciso e live in test); mancano solo `STRIPE_WEBHOOK_SECRET`
+  su Netlify e un pagamento di prova con carta test.
 
 ### Le decisioni fresche (15/08), già in codice, da COLLAUDARE in locale
 
