@@ -7,7 +7,7 @@
 > (Polar ha detto no; lo shadow è stato tolto). Lo stato vero e aggiornato
 > sta in `INIZIA-QUI.md`, non nei giri datati.
 
-**Aggiornato:** 2026-08-23 (giro #92: la pulizia del repo a Stripe, e il "controlla la mail" che compariva anche da loggato · giro #91: POLAR E CASSA FINTA ESTINTI, lo
+**Aggiornato:** 2026-08-25 (giro #93: SIAMO LIVE su Stripe Managed Payments, il checkout acceso e verificato sull'account vero · giro #92: la pulizia del repo a Stripe, e il "controlla la mail" che compariva anche da loggato · giro #91: POLAR E CASSA FINTA ESTINTI, lo
 scanner fantasma chiuso, il creator col bottone «gratis», e i margini rifatti
 su Stripe. Lo scanner fantasma sparito dalla pagina del verdetto; Polar e la
 cassa di prova tolti da ogni file (rotte, componenti, colonna DB rinominata);
@@ -98,6 +98,36 @@ campo email dell'Osservatorio non più schiacciato sul telefono, immagine
 social rifatta (era rimasta al prodotto viaggi).
 
 ## Dove siamo
+- **GIRO #93 (25/08): SIAMO LIVE SU STRIPE MANAGED PAYMENTS.** Il checkout,
+  l'ultimo pezzo tecnico che mancava, e acceso e verificato sull'account
+  vero. Valerio ha percorso tutto il setup di Stripe passo passo: categoria
+  SaaS, i due prodotti, checkout integrato, verifica dell'identita (account
+  individuale a nome di un adulto, dati coerenti), banca, modalita live,
+  chiave `sk_live_` e webhook live su Netlify.
+  - ✅ **VERIFICATO VIA MCP STRIPE sull'account live:** `charges_enabled` e
+    `payouts_enabled` true, `requirements` vuoti, nessun `disabled_reason`,
+    persona verificata. Webhook live coi due eventi giusti
+    (`checkout.session.completed` + `async_payment_succeeded`), stato
+    enabled, URL giusto. Managed Payments attivo (lo conferma la struttura
+    del saldo con `refund_and_dispute_prefunding`). Carte attive.
+  - ✅ **CODICE: `managed_payments: { enabled: true }` sulla cassa**, dietro
+    l'interruttore `MANAGED_PAYMENTS_ATTIVO` (acceso di default). Senza
+    quella riga la cassa passava dallo Stripe standard, non da MP: e la riga
+    che rende vero il "venditore legale, niente partita IVA per l'IVA".
+    Provato dal vivo: la cassa crea sessioni `cs_live_`, il webhook rifiuta
+    i non firmati (400).
+  - ⚠️ **RESTA DA PROVARE L'ULTIMO ANELLO col pagamento vero:** una carta
+    che crea una pratica. Tutto e configurato giusto, ma la catena completa
+    non e ancora passata una volta (Valerio senza fondi sulla carta per il
+    test). Il segreto del webhook si conferma con un evento di test firmato
+    dal pannello.
+  - ⚠️ **IL FISCALE E IL VERO PEZZO CHE RESTA, e non e di Stripe.** Managed
+    Payments gestisce l'IVA, NON toglie l'obbligo italiano di partita IVA
+    per un'attivita abituale (marchio, sito, marketing: art. 67 TUIR, art.
+    2222 c.c.). Serve la partita IVA della titolare (forfettario) col
+    commercialista, prima del go-to-market. Riepilogo consegnato in chat.
+  - Prossimo (scelta di Valerio): un ultimo collaudo end-to-end del
+    prodotto, poi il go-to-market B2C.
 - **GIRO #92 (23/08): LA PULIZIA DEL REPO A STRIPE, E IL "CONTROLLA LA MAIL"
   CHE COMPARIVA ANCHE DA LOGGATO.** Due richieste di Valerio: aggiornare
   tutto il repo (via il morto, sistemato il falso), e un bug vero visto
