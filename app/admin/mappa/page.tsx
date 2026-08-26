@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Maximize2 } from "lucide-react";
 import Mappa from "@/components/admin/Mappa";
 import { soloAdmin } from "@/lib/admin/guardia";
 import { conto } from "@/lib/admin/mappa";
@@ -12,6 +11,14 @@ import { conto } from "@/lib/admin/mappa";
  * Rivolio». Questa pagina risponde a «come funziona», il cruscotto
  * risponde a «come sta andando». Tenerle separate vuol dire che nessuna
  * delle due invecchia per colpa dell'altra.
+ *
+ * ⚠️ LO SCHERMO INTERO VIVE DENTRO LA MAPPA, non in una pagina a parte.
+ * Prima c'era un link a `/admin/mappa/piena` con `target="_blank"`: quella
+ * pagina però stava DENTRO il guscio del pannello (barra + testata +
+ * larghezza massima), quindi «schermo pieno» era una promessa falsa, e la
+ * scheda nuova quando non si apriva lasciava Valerio sulla stessa pagina.
+ * Adesso il bottone «Schermo intero» sta fra i comandi della mappa e apre
+ * un velo a tutto schermo nella stessa scheda: niente rotta, niente crash.
  */
 export const metadata: Metadata = {
   title: "La mappa | Rivolio",
@@ -31,20 +38,10 @@ export default async function PaginaMappa() {
           {c.fatto} pezzi funzionano, {c.spento} sono costruiti ma spenti, {c.manca} non
           ci sono ancora.
         </strong>{" "}
-        Le strade tratteggiate sono quelle che oggi si interrompono.
+        Le strade tratteggiate sono quelle che oggi si interrompono. Il bottone{" "}
+        <strong className="text-inchiostro">Schermo intero</strong> apre la mappa larga
+        quanto lo schermo; si esce con Esc.
       </p>
-      <div className="mb-3">
-        <a
-          href="/admin/mappa/piena"
-          target="_blank"
-          rel="noopener"
-          className="inline-flex items-center gap-2 rounded-[10px] border border-verde/35 bg-menta-tenue px-4 py-2 text-[13.5px] font-medium text-verde-scuro transition-colors hover:border-verde"
-        >
-          <Maximize2 className="size-4" aria-hidden="true" />
-          Apri a schermo intero
-          <span className="text-[12px] text-verde-scuro/70">in una scheda nuova</span>
-        </a>
-      </div>
       <Mappa />
     </div>
   );

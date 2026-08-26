@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlarmClock,
   Bell,
@@ -12,6 +12,8 @@ import {
   Fingerprint,
   Mail,
   MailOpen,
+  Maximize2,
+  Minimize2,
   Plane,
   Scale,
   Search,
@@ -19,7 +21,9 @@ import {
   Shield,
   Smartphone,
   Stamp,
+  Star,
   Store,
+  Users,
   Video,
   X,
   type LucideIcon,
@@ -71,6 +75,8 @@ const ICONE: Record<string, LucideIcon> = {
   busta: Mail,
   telefono: Smartphone,
   impronta: Fingerprint,
+  stella: Star,
+  persone: Users,
 };
 
 /** Le tre condizioni, dette in italiano e non con un colore soltanto. */
@@ -104,10 +110,28 @@ const MARGINE = 70;
 const larghezzaTela = Math.max(...NODI.map((n) => n.x)) * U + CARD_W + MARGINE * 2;
 const altezzaTela = Math.max(...NODI.map((n) => n.y)) * U + CARD_H + MARGINE * 2;
 
-export default function Mappa({ piena = false }: { piena?: boolean }) {
+export default function Mappa() {
   const [vista, setVista] = useState({ x: 0, y: 0, z: 0.5 });
   const [aperto, setAperto] = useState<Nodo | null>(null);
   const [zonaSola, setZonaSola] = useState<ChiaveZona | null>(null);
+  /**
+   * SCHERMO INTERO, FATTO NEL MODO CHE NON SI ROMPE (Valerio, 26/08: «quando
+   * premo il pulsante per aprire full schermo si crasha tutto, mi
+   * reindirizza nella stessa pagina senza aprire nulla»).
+   *
+   * 🔴 Prima era un link a `/admin/mappa/piena` con `target="_blank"`. Due
+   * difetti in uno: quella pagina viveva DENTRO il guscio del pannello
+   * (barra laterale + testata + `max-w-[1180px]`), quindi «schermo pieno»
+   * era una promessa falsa, la tela restava stretta come prima; e la scheda
+   * nuova, quando non si apriva, lasciava Valerio sulla stessa pagina senza
+   * spiegazioni.
+   *
+   * Adesso è un velo `fixed inset-0` acceso da uno stato React: stessa
+   * scheda, nessuna rotta, nessun blocco dei pop-up, funziona su ogni
+   * browser (il vero schermo intero del sistema su iPhone non copre le
+   * pagine, solo i video). Si chiude con Esc o col bottone.
+   */
+  const [pieno, setPieno] = useState(false);
   const telaio = useRef<HTMLDivElement>(null);
   const trascino = useRef<{ x: number; y: number; vx: number; vy: number } | null>(null);
 
@@ -240,8 +264,37 @@ export default function Mappa({ piena = false }: { piena?: boolean }) {
 
   const spento = (z: ChiaveZona) => zonaSola !== null && zonaSola !== z;
 
+  /* Entrando o uscendo dallo schermo intero la tela cambia misura: la
+     rimettiamo a fuoco DOPO che il nuovo riquadro è stato disegnato (per
+     questo l'effetto e non il click: qui il DOM è già aggiornato). Il primo
+     giro, al montaggio, si salta: la mappa si apre com'era. */
+  const primaVolta = useRef(true);
+  useEffect(() => {
+    if (primaVolta.current) {
+      primaVolta.current = false;
+      return;
+    }
+    const t = requestAnimationFrame(() => {
+      setZonaSola(null);
+      inquadraTutto();
+    });
+    if (!pieno) return () => cancelAnimationFrame(t);
+    const suTasto = (e: KeyboardEvent) => e.key === "Escape" && setPieno(false);
+    window.addEventListener("keydown", suTasto);
+    return () => {
+      cancelAnimationFrame(t);
+      window.removeEventListener("keydown", suTasto);
+    };
+  }, [pieno, inquadraTutto]);
+
   return (
-    <div className={`flex min-h-[520px] flex-col gap-3 ${piena ? "flex-1" : "h-[calc(100dvh-190px)]"}`}>
+    <div
+      className={
+        pieno
+          ? "fixed inset-0 z-[60] flex flex-col gap-3 bg-nebbia p-3 sm:p-4"
+          : "flex h-[calc(100dvh-190px)] min-h-[520px] flex-col gap-3"
+      }
+    >
       {/* ---------------- i comandi ---------------- */}
       <div className="flex flex-wrap items-center gap-2">
         <button
@@ -277,7 +330,20 @@ export default function Mappa({ piena = false }: { piena?: boolean }) {
             {z.nome}
           </button>
         ))}
-        <span className="ml-auto flex items-center gap-1">
+        <span className="ml-auto flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setPieno((v) => !v)}
+            className="inline-flex items-center gap-2 rounded-[9px] border border-bordo bg-white px-3 py-1.5 text-[13px] font-medium text-fumo transition-colors hover:border-verde/40 hover:text-inchiostro"
+          >
+            {pieno ? (
+              <Minimize2 className="size-3.5" aria-hidden="true" />
+            ) : (
+              <Maximize2 className="size-3.5" aria-hidden="true" />
+            )}
+            {pieno ? "Riduci" : "Schermo intero"}
+          </button>
+          <span className="flex items-center gap-1">
           {[-1, 1].map((verso) => (
             <button
               key={verso}
@@ -296,6 +362,7 @@ export default function Mappa({ piena = false }: { piena?: boolean }) {
           ))}
           <span className="w-12 text-right text-[12.5px] tabular-nums text-fumo-2">
             {Math.round(vista.z * 100)}%
+          </span>
           </span>
         </span>
       </div>
@@ -321,7 +388,7 @@ export default function Mappa({ piena = false }: { piena?: boolean }) {
         onPointerCancel={fermaTrascino}
         onWheel={conLaRotella}
         className={`relative flex-1 cursor-grab overflow-hidden rounded-[16px] border border-bordo bg-white active:cursor-grabbing ${
-          piena ? "touch-none" : "touch-pan-y sm:touch-none"
+          pieno ? "touch-none" : "touch-pan-y sm:touch-none"
         }`}
         style={{
           backgroundImage:

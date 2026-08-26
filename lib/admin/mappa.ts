@@ -81,7 +81,7 @@ export const ZONE: {
   {
     chiave: "soldi",
     nome: "Dove si incassa",
-    sotto: "Due momenti soli. Oggi tutti e due sono fermi: manca il venditore.",
+    sotto: "Due momenti: il muro dell'analisi e la pratica. La cassa è Stripe ed è pronta; resta accenderla per il pubblico.",
     tinta: "#b45309",
   },
   {
@@ -158,6 +158,19 @@ export const NODI: Nodo[] = [
     icona: "posta",
     x: 0,
     y: 50,
+  },
+  {
+    id: "affiliati",
+    zona: "ingresso",
+    titolo: "I creator",
+    riga: "Un link tracciato, sconto per l'amico, commissione al creator.",
+    dentro:
+      "Il quinto canale, e l'unico che porta traffico caldo senza che paghiamo prima: un creator mette il suo link, chi arriva ha uno sconto e chi ha portato prende una commissione (40% di default). Tutto è tracciato con un cookie di 60 giorni, e le commissioni si contano una volta sola. C'è la sala di controllo per crearli e vedere quanto hanno portato, e la loro dashboard con i bonus da sbloccare. I creator scelti hanno l'account gratis a vita.",
+    stato: "fatto",
+    icona: "persone",
+    x: 0,
+    y: 62,
+    dove: "/admin/affiliati",
   },
 
   /* ---------------- il prodotto ---------------- */
@@ -335,7 +348,7 @@ export const NODI: Nodo[] = [
     stato: "fatto",
     icona: "database",
     x: 0,
-    y: 68,
+    y: 82,
   },
   {
     id: "registro",
@@ -347,7 +360,7 @@ export const NODI: Nodo[] = [
     stato: "fatto",
     icona: "registro",
     x: 26,
-    y: 68,
+    y: 82,
     dove: "/admin/registro",
   },
   {
@@ -360,7 +373,7 @@ export const NODI: Nodo[] = [
     stato: "fatto",
     icona: "campana",
     x: 52,
-    y: 68,
+    y: 82,
   },
   {
     id: "email",
@@ -372,7 +385,7 @@ export const NODI: Nodo[] = [
     stato: "spento",
     icona: "busta",
     x: 78,
-    y: 68,
+    y: 82,
   },
   {
     id: "app",
@@ -384,7 +397,7 @@ export const NODI: Nodo[] = [
     stato: "spento",
     icona: "telefono",
     x: 104,
-    y: 68,
+    y: 82,
     dove: "/anteprima-app",
   },
 ];
@@ -401,6 +414,7 @@ export const FILI: Filo[] = [
   { da: "google", a: "check" },
   { da: "eventi", a: "check" },
   { da: "osservatorio", a: "check", testo: "chi torna" },
+  { da: "affiliati", a: "check", testo: "link tracciato" },
 
   { da: "check", a: "motore", testo: "volo e data" },
   { da: "dati", a: "motore", testo: "orari certificati" },
@@ -408,7 +422,7 @@ export const FILI: Filo[] = [
 
   { da: "verdetto", a: "muro", testo: "1,99", fermo: true },
   { da: "muro", a: "pratica-acquisto", testo: "si scalano", fermo: true },
-  { da: "venditore", a: "pratica-acquisto", testo: "manca lui", fermo: true },
+  { da: "venditore", a: "pratica-acquisto", testo: "da accendere", fermo: true },
 
   { da: "pratica-acquisto", a: "lettera", testo: "subito" },
   { da: "lettera", a: "sollecito", testo: "42 giorni" },
