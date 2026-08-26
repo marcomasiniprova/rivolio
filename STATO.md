@@ -7,7 +7,7 @@
 > (Polar ha detto no; lo shadow è stato tolto). Lo stato vero e aggiornato
 > sta in `INIZIA-QUI.md`, non nei giri datati.
 
-**Aggiornato:** 2026-08-26 (giro #94: il pannello admin riordinato (via Redis, Marketing in un documento, Economia ridotta al solo box costi in Panoramica, Verdetti fuso dentro Pratiche) e il CRUSCOTTO AFFILIATI completo: vista admin per creator (40% + bonus a soglie + fisso ibrido, clic, storico saldi, segna pagato) e vista creator col link privato firmato, senza account · giro #93: SIAMO LIVE su Stripe Managed Payments, il checkout acceso e verificato sull'account vero · giro #92: la pulizia del repo a Stripe, e il "controlla la mail" che compariva anche da loggato · giro #91: POLAR E CASSA FINTA ESTINTI, lo
+**Aggiornato:** 2026-08-26 (giro #95: la macchina degli affiliati messa a lucido: migrazione APPLICATA sul database vero (col connettore Supabase), link del creator corto e privato (rivolio.it/creator/<token>, niente più JWT), dashboard del creator gamificata e brandizzata (guadagno che sale contando, traguardi da sbloccare con le barre, refresh dal vivo), pagina admin rifatta come SALA DI CONTROLLO (tabella esercito ordinabile, attività automatica, dettaglio per creator), collaudo end-to-end sul database (clic, commissioni, idempotenza) · giro #94: il pannello admin riordinato (via Redis, Marketing in un documento, Economia ridotta al solo box costi in Panoramica, Verdetti fuso dentro Pratiche) e il CRUSCOTTO AFFILIATI completo: vista admin per creator (40% + bonus a soglie + fisso ibrido, clic, storico saldi, segna pagato) e vista creator col link privato firmato, senza account · giro #93: SIAMO LIVE su Stripe Managed Payments, il checkout acceso e verificato sull'account vero · giro #92: la pulizia del repo a Stripe, e il "controlla la mail" che compariva anche da loggato · giro #91: POLAR E CASSA FINTA ESTINTI, lo
 scanner fantasma chiuso, il creator col bottone «gratis», e i margini rifatti
 su Stripe. Lo scanner fantasma sparito dalla pagina del verdetto; Polar e la
 cassa di prova tolti da ogni file (rotte, componenti, colonna DB rinominata);
@@ -98,6 +98,42 @@ campo email dell'Osservatorio non più schiacciato sul telefono, immagine
 social rifatta (era rimasta al prodotto viaggi).
 
 ## Dove siamo
+- **GIRO #95 (26/08): LA MACCHINA DEGLI AFFILIATI MESSA A LUCIDO.** Valerio:
+  «applica la migrazione e collauda una volta per tutte; il link fa paura, la
+  pagina del creator è piatta, l'admin è incasinata; effetto esercito sotto
+  controllo; tutto tracciato, mai perdere nulla che spetta al creator».
+  Quattro domande col popup, poi tutto.
+  - ✅ **MIGRAZIONE APPLICATA SUL DATABASE VERO** (col connettore Supabase, due
+    passaggi): colonne accordo/bonus/clic/variante, il **token** del link corto,
+    e `ultimo_clic` per l'attività. Non più «da fare»: è fatta, verificata.
+  - **IL LINK DEL CREATOR ADESSO È CORTO E PRIVATO**: `rivolio.it/creator/<token>`
+    (una sigla casuale di 12 cifre, non indovinabile), al posto del JWT lungo e
+    brutto. Rotta nuova `/creator/[slug]`; il vecchio link firmato resta vivo.
+    Il token lo genera `creaAffiliato` ai nuovi, ed è stato messo agli esistenti.
+  - **LA DASHBOARD DEL CREATOR È UNA BELLA ESPERIENZA** (scelta di Valerio:
+    gamification e sblocchi). Hero brandizzato col guadagno che **sale
+    contando**, **traguardi da sbloccare** con le barre che si riempiono e i
+    badge «sbloccato», numeri live, e **refresh automatico ogni 30s** senza
+    ricaricare. Trasparente sui suoi numeri, muta sui margini interni (una prova
+    lo vieta). Verificata a schermo a 1440 e 390.
+  - **LA PAGINA ADMIN È UNA SALA DI CONTROLLO** (scelta di Valerio: tabella
+    esercito ordinabile). Tutti i creator a colpo d'occhio, **ordinabile** per
+    attività/da pagare/clic/maturato/nome, **pallino di attività automatico**
+    (dai segnali veri: clic e vendite recenti), e il **dettaglio espandibile**
+    di ognuno (link, soldi, accordo, segna pagato). Cassetto per aggiungere,
+    card sul telefono. Verificata a schermo.
+  - 🔴 **UN BUG VERO CHIUSO STRADA FACENDO**: i numeri oltre mille usavano
+    `toLocaleString`, che sul server (Node senza ICU) e nel browser dà
+    separatori diversi e **rompe l'idratazione**. Resi deterministici; una prova
+    lo vieta per sempre.
+  - ✅ **COLLAUDO END-TO-END SUL DATABASE VERO** (creator di prova, poi
+    cancellato): clic contati (2, con l'ora), commissioni attribuite e separate
+    per variante (1 singola + 1 check), base 7,56€ **esatta**, e il **webhook
+    doppio bloccato** dal vincolo unico (23505: una commissione non si raddoppia
+    mai). Audit del codice: gratis a vita agganciato a muro e cassa, catena
+    cookie→metadata→webhook→commissione intera, sconto applicato. MARCO10 intatto.
+  - Prove: **verify verde**, tipi puliti. Le nuove sono sul progresso dei bonus,
+    il link corto e i numeri deterministici.
 - **GIRO #94 (26/08): IL PANNELLO RIORDINATO E IL CRUSCOTTO AFFILIATI, FULL
   FOCUS SUI CREATOR.** Valerio: «focus su Rivolio, sviluppo e collaudo in vista
   del go-to-market». Quattro domande col popup, poi i pezzi uno alla volta,
@@ -3789,15 +3825,12 @@ social rifatta (era rimasta al prodotto viaggi).
   (Android Studio + emulatore, oppure `expo start --web` in 2 minuti).
 
 ## Serve Valerio (in ordine)
-0-migrazione-affiliati. **LA MIGRAZIONE DEL CRUSCOTTO AFFILIATI, da applicare
-   sul Supabase vero.** Il file è `supabase/2026-08-26-affiliati-dashboard.sql`:
-   aggiunge le colonne dell'accordo, dei bonus e dei clic (su `affiliati` e
-   `commissioni`) e la funzione `segna_clic_affiliato`. Da questa sessione non
-   l'ho potuta applicare (l'egress non raggiunge Supabase). ⚠️ Fino ad allora
-   il pannello affiliati funziona lo stesso, ma **degradato**: niente bonus a
-   soglie, niente conteggio clic, niente separazione singole/famiglia. Appena
-   la applichi, tutto si accende da solo. Il file si può rilanciare, non
-   cancella niente.
+0-migrazione-affiliati. ~~LA MIGRAZIONE DEL CRUSCOTTO AFFILIATI~~ ✅ **FATTA
+   il 26/08 col connettore Supabase** (due passaggi: `affiliati_dashboard` e
+   `affiliati_ultimo_clic`). Bonus a soglie, conteggio clic, link corto e
+   separazione singole/famiglia sono attivi sul database vero, e collaudati
+   end-to-end. Il file `supabase/2026-08-26-affiliati-dashboard.sql` resta nel
+   repo come traccia, si può rilanciare, non cancella niente.
 0-prima. **TELEGRAM: MANCANO DUE RIGHE SU NETLIFY, e basta.** Il bot è
    **@Rivolio_AI_bot**, il canale è già stato provato l'11/08 mandando un
    messaggio vero al telefono di Valerio: è arrivato. Restano da
