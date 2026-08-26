@@ -30,7 +30,8 @@ import { classificaSciopero } from "@/lib/scioperi/scioperi";
 import { dopo } from "@/lib/eventi/registra";
 import { tinGuasto } from "@/lib/eventi/telegram";
 import { normalizzaData, normalizzaVolo } from "./normalizza";
-import type { FattoConPayload, FornitoreVoli } from "./tipi";
+import type { ContestoRicerca, FattoConPayload, FornitoreVoli } from "./tipi";
+import { segnaChiamataFornitore } from "@/lib/api/tetto-fornitore";
 
 import { seSiPaga } from "@/lib/check/ingresso";
 export type EsitoVerifica =
@@ -195,6 +196,43 @@ function cercaCoalescata(
   return p;
 }
 
+/**
+ * LA SECONDA FONTE, DENTRO LE STESSE DIFESE DEL PRIMARIO (audit 26/08).
+ *
+ * 🔴 Prima la seconda fonte (AviationEdge, a pagamento) era chiamata con un
+ * fetch nudo: fuori dal single-flight e fuori dal tetto sulla spesa. Un video
+ * che porta 500 persone sullo stesso volo condivideva UNA chiamata al
+ * primario ma ne sparava 500 al secondario, non contate: il fornitore a
+ * pagamento martellato e la spesa fuori controllo. Adesso le richieste
+ * concorrenti per lo stesso volo condividono una chiamata sola, e ogni
+ * chiamata vera si conta nel tetto: se il tetto è chiuso si salta l'incrocio
+ * (il volo resta come l'ha lasciato il primario, mai un errore).
+ *
+ * ⚠️ Quando si accende la seconda fonte (con la sua chiave), il suo
+ * adattatore andrà fatto passare anche da `chiamaConRitentativo` per avere il
+ * freno d'emergenza; oggi la fonte è spenta, quindi questo giro chiude
+ * l'esposizione che conta (concorrenza e spesa).
+ */
+const inVoloSeconda = new Map<string, Promise<FattoConPayload | null>>();
+
+function cercaSecondaCoalescata(
+  seconda: FornitoreVoli,
+  voloIata: string,
+  dataLocale: string,
+  contesto: ContestoRicerca,
+): Promise<FattoConPayload | null> {
+  const chiave = `${seconda.nome}:${voloIata}:${dataLocale}`;
+  const gia = inVoloSeconda.get(chiave);
+  if (gia) return gia;
+  const p = (async () => {
+    const t = await segnaChiamataFornitore();
+    if (t.chiuso) return null;
+    return seconda.cerca(voloIata, dataLocale, contesto);
+  })().finally(() => inVoloSeconda.delete(chiave));
+  inVoloSeconda.set(chiave, p);
+  return p;
+}
+
 export async function verificaVolo(voloGrezzo: string, dataGrezza: string): Promise<EsitoVerifica> {
   // ── Strato 1: normalizzazione ────────────────────────────────────────
   const volo = normalizzaVolo(voloGrezzo);
@@ -281,9 +319,14 @@ export async function verificaVolo(voloGrezzo: string, dataGrezza: string): Prom
          AeroDataBox lascerebbe incerto (recupera vendite vere), due orari in
          disaccordo lo lasciano incerto (niente false promesse). Gira solo su
          un fatto del primario VERO, mai sulla demo. */
-      const seconda = fatto.fonte === "aerodatabox" ? secondaFonte() : null;
+      /* 🔴 NON SI INTERROGA LA SECONDA FONTE SE IL PRIMARIO È GIÀ CERTO.
+         Un volo tracciato Live è un fatto solido: l'incrocio non serve (e
+         `incrociaFonti` lo dice, torna NIENTE), quindi chiamare la fonte a
+         pagamento sarebbe spesa buttata. Trovato dall'audit (26/08). */
+      const seconda =
+        fatto.fonte === "aerodatabox" && fatto.orarioVerificato !== true ? secondaFonte() : null;
       if (seconda) {
-        const altra = await seconda.cerca(volo.valore, data.valore, {
+        const altra = await cercaSecondaCoalescata(seconda, volo.valore, data.valore, {
           partenzaIata: fatto.partenzaIata,
           arrivoIata: fatto.arrivoIata,
         });

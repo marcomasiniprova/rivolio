@@ -9,8 +9,11 @@ import {
   analisiGiaPagata,
   creditoFinito,
   passDi,
+  rilasciaCheck,
+  riservaCheckAtomica,
   rispostaMuro,
   segnaConsumo,
+  type EsitoRiserva,
 } from "@/lib/check/cancello";
 import { COOKIE_PASS, consumaPass } from "@/lib/check/pass";
 import { formaCodiceValida, normalizzaCodice } from "@/lib/recensioni/buono";
@@ -139,10 +142,26 @@ export async function POST(req: Request) {
      spento mangiava un secondo credito sullo STESSO volo.
      Adesso si guarda anche il volo: quello che uno ha comprato è la
      risposta su quel volo, non un'esecuzione del programma. */
-  const giaPagata = pass ? await analisiGiaPagata(pass, volo, data) : false;
-  if (pass && !giaPagata && (await creditoFinito(pass))) {
+  /* 🔴 IL CANCELLO ORA È ATOMICO (audit 26/08). Prima controllo e consumo
+     erano due momenti separati con in mezzo verificaVolo (fino a 8s): 20
+     richieste in parallelo su voli diversi passavano tutte con un pass da 1.
+     Adesso il posto si riserva in un colpo solo sul database.
+       "riservato" = posto nuovo preso.  "gia" = stesso volo già pagato,
+       gratis.  "finito" = posti esauriti, muro.  "errore" = riserva non
+       disponibile (migrazione non applicata o DB giù): si degrada alla
+       vecchia logica, per non bloccare chi ha pagato per un guasto nostro. */
+  const riserva: EsitoRiserva = pass ? await riservaCheckAtomica(pass, volo, data) : "errore";
+  let giaPagataDegrado = false;
+  if (pass && riserva === "finito") {
     traccia(req, { tipo: "check", volo }, { tipo: "muro", extra: { motivo: "credito finito" } });
     return rispostaMuro(req);
+  }
+  if (pass && riserva === "errore") {
+    giaPagataDegrado = await analisiGiaPagata(pass, volo, data);
+    if (!giaPagataDegrado && (await creditoFinito(pass))) {
+      traccia(req, { tipo: "check", volo }, { tipo: "muro", extra: { motivo: "credito finito" } });
+      return rispostaMuro(req);
+    }
   }
 
   // Da qui in giù verificaVolo non lancia mai: un guasto diventa esito incerto.
@@ -169,15 +188,25 @@ export async function POST(req: Request) {
      il credito resta: chi paga per sapere e si sente rispondere "non lo
      so" non ha comprato niente, e trattenergli i soldi è la strada più
      breve per una contestazione sulla carta (vedi CORTESIA_SU_INCERTO). */
-  const siConsuma =
-    Boolean(pass) &&
-    /* Lo stesso volo non si paga due volte: vedi `analisiGiaPagata`. */
-    !giaPagata &&
-    !(CORTESIA_SU_INCERTO && verdetto.esito === "incerto");
+  const incerto = CORTESIA_SU_INCERTO && verdetto.esito === "incerto";
+  /* Il posto riservato prima dell'analisi ora si conferma o si rilascia:
+     - "riservato" + risposta vera → si consuma;
+     - "riservato" + incerto → si RILASCIA (un "non lo so" non costa un posto);
+     - "gia" → gratis, non consuma (stesso volo già pagato);
+     - "errore" (degrado) → la vecchia regola sul registro. */
+  let siConsuma = false;
+  if (pass) {
+    if (riserva === "riservato") {
+      if (incerto) await rilasciaCheck(pass, volo, data);
+      else siConsuma = true;
+    } else if (riserva === "errore") {
+      siConsuma = !giaPagataDegrado && !incerto;
+    }
+  }
   const daConsumare = siConsuma && pass ? consumaPass(pass) : undefined;
 
-  /* Il consumo si scrive nel REGISTRO, non solo nel cookie: è quello che
-     impedisce di riusare la stessa ricevuta copiandola a mano. */
+  /* Il consumo si scrive nel REGISTRO, non solo nel cookie: tiene lo storico
+     completo (`ordine_check`) su cui si appoggia anche il degrado. */
   if (siConsuma && pass) await segnaConsumo(esito.verificaId, pass.ordine);
 
   /* Il codice si brucia appena l'analisi dà un verdetto VERO (idoneo o non

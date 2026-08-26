@@ -177,6 +177,73 @@ export async function segnaConsumo(verificaId: string | null, ordine: string): P
   }
 }
 
+/** L'esito della riserva atomica del posto. */
+export type EsitoRiserva = "riservato" | "gia" | "finito" | "errore";
+
+/** La chiave del posto: lo stesso volo, nello stesso giorno, è un posto solo. */
+const chiaveRiserva = (voloIata: string, dataLocale: string) =>
+  `${voloIata.trim().toUpperCase()}|${dataLocale}`;
+
+/**
+ * RISERVA UN POSTO DEL CHECK, IN MODO ATOMICO (audit 26/08).
+ *
+ * 🔴 Prima il credito si controllava (`creditoFinito`) e si consumava
+ * (`segnaConsumo`) in due momenti, con in mezzo `verificaVolo` (fino a 8s):
+ * 20 richieste in parallelo su voli diversi passavano tutte prima che una
+ * consumasse. Qui il posto si prende in un colpo solo, sul database, con un
+ * lock per ordine: solo `quanti` posti per pass, e lo stesso volo resta
+ * gratis (torna "gia").
+ *
+ * ⚠️ Torna "errore" se la funzione non c'è (migrazione non applicata) o il
+ * database non risponde: chi chiama DEVE degradare alla vecchia logica, mai
+ * bloccare chi ha pagato per un guasto nostro.
+ */
+export async function riservaCheckAtomica(
+  pass: Pass,
+  voloIata: string,
+  dataLocale: string,
+): Promise<EsitoRiserva> {
+  if (!SERVIZIO_ATTIVO) return "errore";
+  try {
+    const { data, error } = await supabaseServizio().rpc("riserva_check", {
+      p_ordine: pass.ordine,
+      p_quanti: pass.quanti,
+      p_chiave: chiaveRiserva(voloIata, dataLocale),
+    });
+    if (error) {
+      if (!/does not exist|schema cache|function/i.test(error.message)) {
+        console.error("[cancello] riserva atomica non riuscita:", error.message);
+      }
+      return "errore";
+    }
+    return data === "riservato" || data === "gia" || data === "finito" ? data : "errore";
+  } catch (e) {
+    console.error("[cancello] riserva atomica non riuscita:", e);
+    return "errore";
+  }
+}
+
+/**
+ * Rilascia il posto riservato: si usa quando il verdetto esce "incerto", che
+ * non si vende (CORTESIA_SU_INCERTO). Senza questo, un "non lo so" mangerebbe
+ * un posto pagato.
+ */
+export async function rilasciaCheck(
+  pass: Pass,
+  voloIata: string,
+  dataLocale: string,
+): Promise<void> {
+  if (!SERVIZIO_ATTIVO) return;
+  try {
+    await supabaseServizio().rpc("rilascia_check", {
+      p_ordine: pass.ordine,
+      p_chiave: chiaveRiserva(voloIata, dataLocale),
+    });
+  } catch (e) {
+    console.error("[cancello] rilascio posto non riuscito:", e);
+  }
+}
+
 /** I dati che il muro mostra: prezzo, posti, e dove si paga. */
 export async function datiDelMuro(req: Request) {
   /* Il prezzo e i posti rimasti li calcola il SERVER: sono un dato, non

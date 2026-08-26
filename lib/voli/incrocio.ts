@@ -64,6 +64,17 @@ export function incrociaFonti(
   secondaPrevistoUtc: string | null | undefined,
   secondaEffettivoUtc: string | null | undefined,
 ): EsitoIncrocio {
+  /* 🔴 UN PRIMARIO GIÀ CERTO NON SI METTE MAI IN VETO DALLA RISERVA.
+     Questo controllo stava DOPO il ramo «si contraddicono»: un volo che il
+     primario aveva tracciato Live (fatto solido, idoneo) veniva marcato
+     `discordanti` se la riserva sbagliava di un quarto d'ora, verifica.ts
+     lo salvava in cache come definitivo, e da lì ogni check di quel volo, di
+     chiunque, usciva «incerto» PER SEMPRE: una vendita idonea persa in
+     silenzio pur avendo avuto un fatto certo. Adesso, se il primario è già
+     verificato, la seconda fonte non serve e non può nemmeno contraddirlo.
+     Trovato dall'audit del pannello (26/08). */
+  if (primario.orarioVerificato === true) return NIENTE;
+
   const pPrev = primario.arrivoPrevistoUtc ? Date.parse(primario.arrivoPrevistoUtc) : NaN;
   const pEff = primario.arrivoEffettivoUtc ? Date.parse(primario.arrivoEffettivoUtc) : NaN;
   const sPrev = secondaPrevistoUtc ? Date.parse(secondaPrevistoUtc) : NaN;
@@ -79,9 +90,6 @@ export function incrociaFonti(
 
   // Concordano, ma non abbastanza stretto per promuovere un fatto a certo.
   if (scarto > SCARTO_CONFERMA_MIN) return NIENTE;
-
-  // Il primario era già certo di suo: non c'è niente da confermare.
-  if (primario.orarioVerificato === true) return NIENTE;
 
   /* La zona grigia: da 180 a 200 minuti. Qui un incrocio non basta, perché
      un errore di pochi minuti cambierebbe l'esito. Si resta incerti. */

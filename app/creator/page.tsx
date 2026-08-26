@@ -83,7 +83,8 @@ export default function PaginaCreator() {
           <ul className="mt-4 flex flex-col gap-3 text-[0.98rem] leading-relaxed text-fumo">
             <li>
               <span className="font-medium text-inchiostro">È onesto.</span> Il check dice la verità, e
-              diciamo pure che uno potrebbe farlo gratis da sé. Questo fa fiducia, e la fiducia converte.
+              diciamo pure che il reclamo uno può mandarselo da sé senza pagare nessuno. Questo fa
+              fiducia, e la fiducia converte.
             </li>
             <li>
               <span className="font-medium text-inchiostro">C'è la garanzia.</span> Se la compagnia non
