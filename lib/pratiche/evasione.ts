@@ -205,6 +205,7 @@ export async function evadiPagamentoPratica(
     await registraCommissione({
       codice: dati.ref,
       tipo: "pratica",
+      variante: tipo === "famiglia" ? "famiglia" : "singola",
       prezzoPagato: prezzo ?? 0,
       riferimento: ordineId ?? pratica.id,
     });
