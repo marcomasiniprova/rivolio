@@ -127,6 +127,82 @@ campo email dell'Osservatorio non più schiacciato sul telefono, immagine
 social rifatta (era rimasta al prodotto viaggi).
 
 ## Dove siamo
+- **GIRO #96 (26/08): IL PANNELLO A LUCIDO, L'AUDIT DI ROBUSTEZZA E I QUATTRO
+  BUCHI CHIUSI.** Valerio: giro completo di rifinitura del pannello +
+  «pensa a Rivolio come business, non come codice; audit robusto per la
+  scala e gli edge case; ricerca sulle 15 SaaS migliori; chiudi i buchi;
+  guidami passo passo e dimmi il perché». Fatto a pezzi, ognuno verde
+  prima del prossimo.
+  - **IL PANNELLO RIFATTO:** Pratiche è un elenco «di chi è la palla»
+    (`statiPannello.ts` + `ElencoPratiche.tsx`), Traffico e Passaparola
+    fuse in una sola sezione **Crescita** (`/admin/crescita`), Iscritti
+    rifatta (`ElencoIscritti.tsx`), Impostazioni senza il vecchio blocco
+    del dominio, e **La Mappa** col pieno schermo che non crasha più (stato
+    React `pieno`, niente più pagina `/piena`) e aggiornata allo stato vero
+    (nodo affiliati, zone corrette).
+  - **PULIZIA DEI DATI DI PROVA sul database vero** (scelta di Valerio),
+    in ordine di chiave esterna: crediti, eventi pratica, pratiche,
+    verifiche ZZ, voli ZZ, iscritti di prova, eventi bot. **I dati veri
+    intatti** (4 iscritti, 48 voli, 115 verifiche, gli eventi google/ig/
+    bing tenuti). Contato prima e dopo.
+  - 🔴 **L'AUDIT DI ROBUSTEZZA, SEI CRITICI CHIUSI** (tutti con guardia
+    statica in `prove/audit-critici.spec.ts`): l'open redirect di
+    `/auth/sessione` (usava il grezzo, non il ripulito); il mail bombing
+    (freno per IP su iscriviti e verifica/email); i webhook concorrenti
+    (l'evasione si ferma se perde la corsa, `giaEsisteva`); il cron
+    follow-up che falliva APERTO (ora torna `null` e annulla il giro
+    invece di rimandare email doppie di massa); le commissioni creator
+    troncate a 1000 (lettura paginata); l'escalation admin (la colonna
+    `ruolo` non è più aggiornabile dall'utente, `revoke update` +
+    `grant` solo sulle colonne sicure, migrazione applicata).
+  - **E CINQUE IMPORTANTI** (spiegati a Valerio uno per uno, poi chiusi):
+    il check pagato ha la rete di sicurezza via email (se il browser non
+    torna dalla cassa, `analisiPagataPronta` manda il link da qualsiasi
+    dispositivo); i numeri del pannello si contano dal DATABASE (RPC
+    `cruscotto_numeri`/`cruscotto_gruppi`/`serie_giorni`, prima gli
+    `sbloccato` si gonfiavano); il muro del check è ATOMICO (riserva
+    prima dell'analisi, rilascia sull'incerto: niente più corsa che apre
+    due analisi con un pass solo); la seconda fonte non congela un
+    primario già certo (short-circuit prima del ramo discordanti); il
+    riepilogo serale copre anche l'inverno (cron 19 e 20 UTC).
+  - **LA RICERCA SULLE 15 SAAS** (workflow, 9 agenti): ha confermato i fix
+    e ha portato il playbook con gli ultimi quattro buchi, chiusi qui.
+  - 🔴 **I QUATTRO BUCHI DEL PLAYBOOK (scelta di Valerio: 1, 2 e 4):**
+    - **Buco 1 (dedup webhook Stripe):** Stripe consegna at-least-once e
+      rimanda lo stesso evento per 3 giorni. Il webhook «prende» l'evento
+      scrivendo il suo id in `webhook_eventi_stripe` (primary key): un
+      doppione si riconosce e si salta; se fallisce (5xx) la presa si
+      rilascia. Più il vincolo unico parziale su `pratiche.ordine_pagamento`
+      e la pulizia settimanale oltre i 7 giorni. Migrazione applicata e nel
+      repo (`2026-08-26-webhook-dedup.sql`).
+    - **Buco 2 (idempotency key):** `sessions.create` riceve una chiave
+      stabile (prodotto:verifica:tipo), così un doppio clic riusa la stessa
+      cassa invece di aprirne due.
+    - **Buco 4 (il MODO SICURO):** un interruttore d'emergenza globale
+      (`impostazioni.modo_sicuro` sul DB, `lib/motore/modo-sicuro.ts`,
+      bottone in cima a Impostazioni). Acceso, mette in pausa le email
+      automatiche (cron promemoria e recupero) e la replica AI (torna al
+      testo fisso); **NON tocca check, verdetto, pagamento e apertura
+      pratica**. Sul database e non su una variabile Netlify apposta:
+      vale entro pochi secondi, senza rifare il deploy. Migrazione
+      applicata e nel repo (`2026-08-26-modo-sicuro.sql`).
+    - **Buco 3 (freno condiviso in Postgres)** resta come nota: oggi il
+      freno per IP è in memoria e il tetto sulla spesa è già sul DB; il
+      freno condiviso vero si accende con la scala, non ora.
+  - **IL MONITORAGGIO ESTERNO (`/api/salute` già online):** l'endpoint
+    risponde 200 se il database è ok, 503 se è giù, senza dati sensibili.
+    È il gancio per una sonda esterna. ⚠️ **Serve Valerio:** un account
+    **BetterStack** (gratis, uso commerciale ok) con un monitor su
+    `https://rivolio.it/api/salute` ogni 3 min, e un account **Sentry**
+    (gratis, Developer, 5.000 errori/mese) da cui prendere il DSN da
+    mettere su Netlify. Poi cablo Sentry lato server e browser e guardiamo
+    il build.
+  - Prove: **tipi puliti, lint pulito, le 15 guardie dell'audit verdi**.
+    ⚠️ `npm run build` e il collaudo VISIVO del pannello dietro il login
+    non girano da questa sandbox (Google Fonts bloccato, l'egress non
+    raggiunge Supabase dal dev server): il build vero lo fa Netlify a ogni
+    push. Le migrazioni le ho applicate io col connettore Supabase e
+    verificate con SQL.
 - **GIRO #95 (26/08): LA MACCHINA DEGLI AFFILIATI MESSA A LUCIDO.** Valerio:
   «applica la migrazione e collauda una volta per tutte; il link fa paura, la
   pagina del creator è piatta, l'admin è incasinata; effetto esercito sotto
@@ -3871,6 +3947,24 @@ social rifatta (era rimasta al prodotto viaggi).
    bot**, non il chat id: si somigliano e si scambiano facilissimamente.
    Per questo `/admin/impostazioni` adesso il chat id lo trova da solo e
    lo mostra da copiare, invece di far cercare @userinfobot.
+0-monitoraggio. **DUE OCCHI ESTERNI SUL SITO (audit 26/08).** Oggi Rivolio
+   non ha modo di sapere se è giù o se sta dando errori, tranne un cliente
+   che te lo dice. Due strumenti, tutti e due col piano GRATIS che basta:
+   a. **BetterStack** (uptime, «il sito risponde?»): crea l'account gratis,
+      *Create monitor*, URL `https://rivolio.it/api/salute`, controllo ogni
+      3 minuti, avvisi alla tua email (o Telegram). L'endpoint l'ho già
+      costruito io: risponde 200 se il database è ok, 503 se è giù. Gratis:
+      10 monitor, ne usi 1. ⚠️ Se hai già un monitor su **UptimeRobot**,
+      puntalo su `/api/salute` invece della home, oppure cancellalo e usa
+      BetterStack (il suo gratis è pensato per uso commerciale, quello di
+      UptimeRobot nel 2024 lo aveva vietato e sul 2026 c'è confusione).
+   b. **Sentry** (errori, «il codice esplode a un cliente?»): crea
+      l'account gratis (Developer, 5.000 errori/mese: ne basta un decimo),
+      progetto Next.js, puoi **saltare** «Connect your code» (non serve
+      GitHub). Ti serve solo il **DSN** (una stringa
+      `https://...@...ingest.sentry.io/...`): copiala e dammela, oppure
+      mettila su Netlify come `SENTRY_DSN` e `NEXT_PUBLIC_SENTRY_DSN`. Poi
+      cablo Sentry lato server e browser e guardiamo il build.
 0-bis-sicurezza. **UNA SPUNTA SU SUPABASE, dieci secondi.** Il controllo
    di sicurezza del database (fatto l'11/08) segnala una cosa vera:
    **le password compromesse non vengono bloccate**. Supabase sa
