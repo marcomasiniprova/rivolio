@@ -7,7 +7,7 @@
 > (Polar ha detto no; lo shadow è stato tolto). Lo stato vero e aggiornato
 > sta in `INIZIA-QUI.md`, non nei giri datati.
 
-**Aggiornato:** 2026-08-25 (giro #93: SIAMO LIVE su Stripe Managed Payments, il checkout acceso e verificato sull'account vero · giro #92: la pulizia del repo a Stripe, e il "controlla la mail" che compariva anche da loggato · giro #91: POLAR E CASSA FINTA ESTINTI, lo
+**Aggiornato:** 2026-08-26 (giro #94: il pannello admin riordinato (via Redis, Marketing in un documento, Economia ridotta al solo box costi in Panoramica, Verdetti fuso dentro Pratiche) e il CRUSCOTTO AFFILIATI completo: vista admin per creator (40% + bonus a soglie + fisso ibrido, clic, storico saldi, segna pagato) e vista creator col link privato firmato, senza account · giro #93: SIAMO LIVE su Stripe Managed Payments, il checkout acceso e verificato sull'account vero · giro #92: la pulizia del repo a Stripe, e il "controlla la mail" che compariva anche da loggato · giro #91: POLAR E CASSA FINTA ESTINTI, lo
 scanner fantasma chiuso, il creator col bottone «gratis», e i margini rifatti
 su Stripe. Lo scanner fantasma sparito dalla pagina del verdetto; Polar e la
 cassa di prova tolti da ogni file (rotte, componenti, colonna DB rinominata);
@@ -98,6 +98,50 @@ campo email dell'Osservatorio non più schiacciato sul telefono, immagine
 social rifatta (era rimasta al prodotto viaggi).
 
 ## Dove siamo
+- **GIRO #94 (26/08): IL PANNELLO RIORDINATO E IL CRUSCOTTO AFFILIATI, FULL
+  FOCUS SUI CREATOR.** Valerio: «focus su Rivolio, sviluppo e collaudo in vista
+  del go-to-market». Quattro domande col popup, poi i pezzi uno alla volta,
+  ognuno verde prima del prossimo.
+  - **PANNELLO RIMESSO IN ORDINE, quattro cose:**
+    - 🔴 **REDIS/UPSTASH TOLTO del tutto** (codice e pannello). Il freno
+      condiviso non era mai stato acceso e la spesa la protegge già il tetto
+      sul fornitore: un pezzo mai usato è solo una cosa in più che si rompe.
+      Resta il contatore in memoria; la firma di `oltreIlLimiteCondiviso` non
+      cambia, così non si toccano le dodici rotte che la chiamano.
+    - **MARKETING non è più una sezione**: è diventato `docs/MARKETING-AI.md`
+      (Bing/IndexNow, le 10 domande del controllo mensile, i 3 testi pronti,
+      gruppi Facebook e forum). Il pannello resta per i numeri.
+    - **ECONOMIA sfoltita**: via la sezione e il simulatore, resta **solo il
+      box "I costi, con la loro fonte"**, spostato in cima alla **Panoramica**,
+      accanto agli incassi.
+    - **VERDETTI dentro PRATICHE**: la logica è in
+      `components/admin/ControlloVerdetti.tsx` e le Pratiche la mostrano in
+      fondo come mezza sezione; `/admin/verdetti` reindirizza (vecchi
+      segnalibri salvi, con guardia admin).
+  - **IL CRUSCOTTO AFFILIATI, costruito sul serio (brief creator del 26/08).**
+    - **Modello economico completo** (`lib/affiliati/modello.ts`, provato):
+      40% sul lordo di ogni pratica, più bonus a soglie (singole 20€ alle 10
+      poi 50€ ogni 25, famiglia 50€ ogni 10, check 50€ ogni 100), più un
+      **fisso una-tantum** per gli accordi ibridi coi creator grandi. Pagamento
+      a mano ogni 15 giorni sul consolidato; rimborso in credito, così la
+      commissione del creator non torna mai indietro.
+    - **Vista admin piena**: ogni creator con link `?ref`, link privato di
+      cruscotto, risultati veri (clic, check, singole, famiglia), soldi (base
+      + bonus + fisso), prossimo bonus, storico saldi e modifica dell'accordo.
+      «Segna pagato» chiude base, bonus e fisso insieme.
+    - **Vista creator col LINK PRIVATO FIRMATO** (`/creator/cruscotto?t=...`,
+      HMAC, senza account): il creator vede solo i SUOI numeri, quanto ha
+      guadagnato e il prossimo bonus. **Niente margini interni** (IVA, cassa):
+      una prova lo vieta.
+    - **I clic si contano davvero**: un beacon sulla landing conta le aperture
+      del link `?ref` con una funzione atomica sul database.
+  - ⚠️ **UNA MIGRAZIONE DA APPLICARE**: `supabase/2026-08-26-affiliati-
+    dashboard.sql` (colonne accordo/bonus/clic/variante + la funzione
+    `segna_clic_affiliato`). Da qui non l'ho potuta applicare (l'egress non
+    raggiunge Supabase). **Il codice degrada da solo finché non è applicata**:
+    legge il minimo, non si rompe. In «Serve Valerio».
+  - Prove: **verify verde** (tipi puliti, e le nuove su modello dei bonus,
+    link firmato del creator e trasparenza della vista creator).
 - **GIRO #93 (25/08): SIAMO LIVE SU STRIPE MANAGED PAYMENTS.** Il checkout,
   l'ultimo pezzo tecnico che mancava, e acceso e verificato sull'account
   vero. Valerio ha percorso tutto il setup di Stripe passo passo: categoria
@@ -3745,6 +3789,15 @@ social rifatta (era rimasta al prodotto viaggi).
   (Android Studio + emulatore, oppure `expo start --web` in 2 minuti).
 
 ## Serve Valerio (in ordine)
+0-migrazione-affiliati. **LA MIGRAZIONE DEL CRUSCOTTO AFFILIATI, da applicare
+   sul Supabase vero.** Il file è `supabase/2026-08-26-affiliati-dashboard.sql`:
+   aggiunge le colonne dell'accordo, dei bonus e dei clic (su `affiliati` e
+   `commissioni`) e la funzione `segna_clic_affiliato`. Da questa sessione non
+   l'ho potuta applicare (l'egress non raggiunge Supabase). ⚠️ Fino ad allora
+   il pannello affiliati funziona lo stesso, ma **degradato**: niente bonus a
+   soglie, niente conteggio clic, niente separazione singole/famiglia. Appena
+   la applichi, tutto si accende da solo. Il file si può rilanciare, non
+   cancella niente.
 0-prima. **TELEGRAM: MANCANO DUE RIGHE SU NETLIFY, e basta.** Il bot è
    **@Rivolio_AI_bot**, il canale è già stato provato l'11/08 mandando un
    messaggio vero al telefono di Valerio: è arrivato. Restano da
