@@ -4,12 +4,12 @@ import { revalidatePath } from "next/cache";
 import { supabaseServer, utenteCollegato } from "@/lib/supabase/server";
 import { SERVIZIO_ATTIVO, supabaseServizio } from "@/lib/supabase/servizio";
 import { codiceAffiliatoValido } from "@/lib/affiliati/codice";
+import { leggiAffiliati } from "@/lib/affiliati/lettura";
 import { promuoviCreatore, togliCreatore } from "@/lib/affiliati/creatore";
 
 /**
- * Le azioni del pannello affiliati. Come tutte le server action, ognuna
- * ricontrolla da capo che chi chiama sia admin: sono endpoint pubblici con
- * un altro vestito, e "il bottone lo vede solo l'admin" non è una serratura.
+ * Le azioni del pannello affiliati. Ognuna ricontrolla da capo che chi chiama
+ * sia admin: sono endpoint pubblici con un altro vestito.
  */
 async function soloAdmin(): Promise<string | null> {
   const utente = await utenteCollegato();
@@ -21,7 +21,24 @@ async function soloAdmin(): Promise<string | null> {
 
 export type EsitoAffiliati = { ok?: string; errore?: string };
 
-/** Crea un creator. Firma (prev, formData) per useActionState. */
+function numero(v: FormDataEntryValue | null, min: number, max: number): number | null {
+  const n = Number(String(v ?? "").trim());
+  if (!Number.isFinite(n) || n < min || n > max) return null;
+  return n;
+}
+function interoOpt(v: FormDataEntryValue | null): number | null {
+  const t = String(v ?? "").trim();
+  if (!t) return null;
+  const n = Number(t);
+  return Number.isFinite(n) ? Math.max(0, Math.round(n)) : null;
+}
+function euroOpt(v: FormDataEntryValue | null): number {
+  const t = String(v ?? "").trim();
+  if (!t) return 0;
+  const n = Number(t);
+  return Number.isFinite(n) ? Math.max(0, n) : 0;
+}
+
 export async function creaAffiliato(
   _prev: EsitoAffiliati,
   form: FormData,
@@ -31,23 +48,34 @@ export async function creaAffiliato(
 
   const codice = codiceAffiliatoValido(String(form.get("codice") ?? ""));
   const nome = String(form.get("nome") ?? "").trim();
-  const sconto = Number(form.get("sconto") ?? 10);
-  const commissione = Number(form.get("commissione") ?? 40);
+  const sconto = numero(form.get("sconto"), 0, 90);
+  const commissione = numero(form.get("commissione"), 0, 100);
+  const tipoAccordo =
+    String(form.get("tipo_accordo") ?? "performance") === "ibrido" ? "ibrido" : "performance";
 
   if (!codice) return { errore: "Codice non valido: da 3 a 20 lettere o numeri (es. MARCO)." };
   if (!nome) return { errore: "Manca il nome del creator." };
-  if (!Number.isFinite(sconto) || sconto < 0 || sconto > 90) return { errore: "Sconto fra 0 e 90." };
-  if (!Number.isFinite(commissione) || commissione < 0 || commissione > 100) {
-    return { errore: "Commissione fra 0 e 100." };
-  }
+  if (sconto === null) return { errore: "Sconto fra 0 e 90." };
+  if (commissione === null) return { errore: "Commissione fra 0 e 100." };
 
-  const db = supabaseServizio();
-  const { error } = await db.from("affiliati").insert({
+  const base = {
     codice,
     nome,
     sconto_percento: Math.round(sconto),
     commissione_percento: Math.round(commissione),
-  });
+  };
+  const rigaPiena: Record<string, unknown> = {
+    ...base,
+    tipo_accordo: tipoAccordo,
+    seguito: interoOpt(form.get("seguito")),
+    bonus_fisso: euroOpt(form.get("bonus_fisso")),
+  };
+
+  const db = supabaseServizio();
+  let { error } = await db.from("affiliati").insert(rigaPiena);
+  if (error && /column|schema cache/i.test(error.message)) {
+    ({ error } = await db.from("affiliati").insert(base));
+  }
   if (error) {
     if (error.code === "23505") return { errore: `Il codice ${codice} esiste già.` };
     console.error("[affiliati] creazione fallita:", error.message);
@@ -57,23 +85,54 @@ export async function creaAffiliato(
   return { ok: `Creato ${codice}. Copia il suo link e daglielo.` };
 }
 
-/** Segna pagate tutte le commissioni aperte di un creator. Native form. */
+/** Segna pagato TUTTO il dovuto: base 40%, bonus a soglie e fisso una-tantum. */
 export async function segnaPagate(form: FormData): Promise<void> {
   if (!(await soloAdmin())) return;
   if (!SERVIZIO_ATTIVO) return;
   const id = String(form.get("id") ?? "");
   if (!id) return;
   const db = supabaseServizio();
+  const oraIso = new Date().toISOString();
+
   const { error } = await db
     .from("commissioni")
-    .update({ pagata_il: new Date().toISOString() })
+    .update({ pagata_il: oraIso })
     .eq("affiliato_id", id)
     .is("pagata_il", null);
   if (error) console.error("[affiliati] segna pagate fallito:", error.message);
+
+  const tutti = await leggiAffiliati();
+  const c = tutti?.find((x) => x.id === id);
+  if (c) {
+    const agg: Record<string, unknown> = { bonus_pagato: c.bonus.totale };
+    if (c.tipo_accordo === "ibrido" && c.bonusFisso > 0 && !c.fissoPagatoIl) {
+      agg.bonus_fisso_pagato_il = oraIso;
+    }
+    const { error: e2 } = await db.from("affiliati").update(agg).eq("id", id);
+    if (e2 && !/column|schema cache/i.test(e2.message)) {
+      console.error("[affiliati] segna bonus fallito:", e2.message);
+    }
+  }
   revalidatePath("/admin/affiliati");
 }
 
-/** Sospende o riattiva un creator. Native form. */
+export async function aggiornaAccordo(form: FormData): Promise<void> {
+  if (!(await soloAdmin())) return;
+  if (!SERVIZIO_ATTIVO) return;
+  const id = String(form.get("id") ?? "");
+  if (!id) return;
+  const agg: Record<string, unknown> = {
+    tipo_accordo:
+      String(form.get("tipo_accordo") ?? "performance") === "ibrido" ? "ibrido" : "performance",
+    seguito: interoOpt(form.get("seguito")),
+    bonus_fisso: euroOpt(form.get("bonus_fisso")),
+  };
+  const db = supabaseServizio();
+  const { error } = await db.from("affiliati").update(agg).eq("id", id);
+  if (error) console.error("[affiliati] aggiorna accordo fallito:", error.message);
+  revalidatePath("/admin/affiliati");
+}
+
 export async function cambiaStato(form: FormData): Promise<void> {
   if (!(await soloAdmin())) return;
   if (!SERVIZIO_ATTIVO) return;
@@ -86,30 +145,20 @@ export async function cambiaStato(form: FormData): Promise<void> {
   revalidatePath("/admin/affiliati");
 }
 
-/* --------------------------------------------- creator gratis a vita */
-
-/**
- * Promuove un'email a creator gratis a vita. Firma (prev, formData) per
- * useActionState. Se l'account non esiste ancora lo crea (email già
- * confermata: lo decide l'admin), così il giorno che entra è già gratis.
- */
 export async function promuoviCreator(
   _prev: EsitoAffiliati,
   form: FormData,
 ): Promise<EsitoAffiliati> {
   if (!(await soloAdmin())) return { errore: "Non sei autorizzato." };
   if (!SERVIZIO_ATTIVO) return { errore: "SUPABASE_SECRET_KEY assente." };
-
   const email = String(form.get("email") ?? "").trim();
   if (!email) return { errore: "Metti l'email del creator." };
-
   const esito = await promuoviCreatore(email);
   if (!esito.ok) return { errore: esito.motivo ?? "Non riuscito." };
   revalidatePath("/admin/affiliati");
   return { ok: `${email} ora ha tutto gratis a vita.` };
 }
 
-/** Toglie il gratis a vita a un account. Native form. */
 export async function rimuoviCreator(form: FormData): Promise<void> {
   if (!(await soloAdmin())) return;
   const id = String(form.get("id") ?? "");
