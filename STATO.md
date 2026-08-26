@@ -22,9 +22,21 @@ CRITICI chiusi e verificati: escalation ad admin via RLS colonna ruolo
 (migrazione applicata sul DB vero), commissioni creator sottostimate oltre le
 1000 righe, open redirect dopo il login, mail bombing su iscriviti/verifica,
 cron follow-up che falliva aperto (invio doppio di massa), webhook Stripe
-concorrenti (doppio benvenuto e doppio incasso). La pulizia dei dati di test è
-pronta ma IN ATTESA del «vai» (rischia di toccare le poche visite reali:
-google, ig, bing). · giro #95: la macchina degli affiliati messa a lucido: migrazione APPLICATA sul database vero (col connettore Supabase), link del creator corto e privato (rivolio.it/creator/<token>, niente più JWT), dashboard del creator gamificata e brandizzata (guadagno che sale contando, traguardi da sbloccare con le barre, refresh dal vivo), pagina admin rifatta come SALA DI CONTROLLO (tabella esercito ordinabile, attività automatica, dettaglio per creator), collaudo end-to-end sul database (clic, commissioni, idempotenza) · giro #94: il pannello admin riordinato (via Redis, Marketing in un documento, Economia ridotta al solo box costi in Panoramica, Verdetti fuso dentro Pratiche) e il CRUSCOTTO AFFILIATI completo: vista admin per creator (40% + bonus a soglie + fisso ibrido, clic, storico saldi, segna pagato) e vista creator col link privato firmato, senza account · giro #93: SIAMO LIVE su Stripe Managed Payments, il checkout acceso e verificato sull'account vero · giro #92: la pulizia del repo a Stripe, e il "controlla la mail" che compariva anche da loggato · giro #91: POLAR E CASSA FINTA ESTINTI, lo
+concorrenti (doppio benvenuto e doppio incasso). Poi, su scelta di Valerio,
+chiusi anche gli IMPORTANTI: il muro del check reso ATOMICO (funzione
+riserva_check sul DB vero, niente più scavalco in parallelo), la seconda
+fonte che non congela più una vendita idonea e resta dentro il tetto sulla
+spesa, il riepilogo serale che d'inverno non partiva (cron 19,20 UTC), i
+NUMERI DEL PANNELLO contati dal database (niente più tetto a 20k righe, e la
+conversione del muro finalmente onesta), e la RETE DI SICUREZZA del check
+pagato (email col link se il browser non torna dalla cassa). Più l'endpoint
+/api/salute per la sonda di uptime. E la PULIZIA DEI DATI DI TEST fatta sul DB
+vero (tolti 21 iscritti prova, 27 voli e 32 verifiche ZZ, 19 pratiche di
+collaudo, ~700 eventi da localhost/anteprime/ZZ; tenute le 4 iscrizioni vere e
+le visite vere da google/ig/bing). Ricerca su 15 SaaS: playbook pre-lancio (il
+grosso già chiuso). ⚠️ RESTA A VALERIO: STRIPE_WEBHOOK_SECRET su Netlify +
+un pagamento di prova con carta test; Sentry (account + chiave); la sonda
+uptime (UptimeRobot). · giro #95: la macchina degli affiliati messa a lucido: migrazione APPLICATA sul database vero (col connettore Supabase), link del creator corto e privato (rivolio.it/creator/<token>, niente più JWT), dashboard del creator gamificata e brandizzata (guadagno che sale contando, traguardi da sbloccare con le barre, refresh dal vivo), pagina admin rifatta come SALA DI CONTROLLO (tabella esercito ordinabile, attività automatica, dettaglio per creator), collaudo end-to-end sul database (clic, commissioni, idempotenza) · giro #94: il pannello admin riordinato (via Redis, Marketing in un documento, Economia ridotta al solo box costi in Panoramica, Verdetti fuso dentro Pratiche) e il CRUSCOTTO AFFILIATI completo: vista admin per creator (40% + bonus a soglie + fisso ibrido, clic, storico saldi, segna pagato) e vista creator col link privato firmato, senza account · giro #93: SIAMO LIVE su Stripe Managed Payments, il checkout acceso e verificato sull'account vero · giro #92: la pulizia del repo a Stripe, e il "controlla la mail" che compariva anche da loggato · giro #91: POLAR E CASSA FINTA ESTINTI, lo
 scanner fantasma chiuso, il creator col bottone «gratis», e i margini rifatti
 su Stripe. Lo scanner fantasma sparito dalla pagina del verdetto; Polar e la
 cassa di prova tolti da ogni file (rotte, componenti, colonna DB rinominata);
