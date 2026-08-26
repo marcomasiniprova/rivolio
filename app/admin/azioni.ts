@@ -165,6 +165,30 @@ export async function correggiVerifica(
   return { ok: `Corretta in "${esitoGiusto}". Il caso è nei log per il golden set.` };
 }
 
+/**
+ * IL MODO SICURO: l'interruttore d'emergenza (audit 26/08).
+ *
+ * Acceso, mette in pausa le email automatiche (cron dei promemoria e
+ * recupero) e la replica AI (torna al testo fisso). Check, verdetto,
+ * pagamento e apertura pratica NON si toccano.
+ *
+ * Come ogni azione qui, ricontrolla da capo che chi chiama sia admin: è un
+ * endpoint pubblico, non basta che il bottone lo veda solo l'admin.
+ */
+export async function impostaModoSicuroAdmin(on: boolean): Promise<EsitoAdmin> {
+  if (!(await soloAdmin())) return { errore: "Non sei autorizzato." };
+  const { impostaModoSicuro } = await import("@/lib/motore/modo-sicuro");
+  const ok = await impostaModoSicuro(on);
+  if (!ok) return { errore: "Non salvato: ricarica la pagina." };
+  revalidatePath("/admin/impostazioni");
+  revalidatePath("/admin");
+  return {
+    ok: on
+      ? "Modo sicuro ACCESO: email automatiche e replica AI in pausa. Cassa e verdetti restano vivi."
+      : "Modo sicuro spento: gli automatismi ripartono.",
+  };
+}
+
 type RispostaSegui = {
   ok?: boolean;
   motivo?: string;

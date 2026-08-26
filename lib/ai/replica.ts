@@ -1,6 +1,7 @@
 import { RIFIUTI, schedaRifiuto, type MotivoRifiuto } from "../pratiche/rifiuto";
 import type { Dossier } from "../pratiche/dossier";
 import { dossierInParole } from "../pratiche/dossier";
+import { modoSicuroAttivo } from "../motore/modo-sicuro";
 
 /**
  * L'AI CHE LEGGE LA RISPOSTA DELLA COMPAGNIA E SCRIVE LA CONTRO-RISPOSTA.
@@ -325,6 +326,13 @@ export async function analizzaRifiuto(
   dossier: Dossier,
   rispostaCompagnia: string,
 ): Promise<AnalisiRifiuto | null> {
+  /* 🔴 MODO SICURO: con l'interruttore d'emergenza acceso l'AI non scrive.
+     Si torna al testo fisso verificato (chi chiama, davanti a null, usa la
+     scelta a lista e la replica standard del motivo), che è la stessa strada
+     di quando il modello non risponde. Il cliente continua a lavorare la sua
+     pratica: cambia solo che il paragrafo su misura resta quello fisso. */
+  if (await modoSicuroAttivo()) return null;
+
   const chiave = process.env.MISTRAL_API_KEY;
   if (!chiave) return null;
   const testo = rispostaCompagnia.trim();

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { soloAdmin } from "@/lib/admin/guardia";
 import { chatIdDaScoprire } from "@/lib/eventi/telegram";
+import { modoSicuroAttivo } from "@/lib/motore/modo-sicuro";
+import { ModoSicuro } from "@/components/admin/ModoSicuro";
 
 /**
  * LE IMPOSTAZIONI, SPIEGATE DA SOLE (richiesta di Valerio, 11/08).
@@ -263,6 +265,7 @@ export default async function PaginaImpostazioni() {
   await soloAdmin();
   const voci = stato();
   const mancanti = voci.filter((v) => !v.ceSta && v.peso !== "facoltativa");
+  const modoSicuro = await modoSicuroAttivo();
 
   /* In che mondo stai incassando: legge solo il prefisso della chiave
      (sk_live_ / sk_test_), mai il valore. È il badge in cima alla pagina. */
@@ -281,6 +284,10 @@ export default async function PaginaImpostazioni() {
       {/* Il paragrafo che stava qui diceva parola per parola quello che
           la testata scrive già sotto il titolo: due volte la stessa frase
           a tre centimetri di distanza. */}
+
+      {/* IL FRENO D'EMERGENZA, in cima: se qualcosa va storto è la prima
+          cosa che si cerca. */}
+      <ModoSicuro acceso={modoSicuro} />
 
       {/* IL BADGE CHE CONTA DI PIÙ: in che mondo stai incassando. Un
           pagamento di prova non è un incasso; non doverlo chiedere a

@@ -114,4 +114,18 @@ test.describe("Gli importanti dell'audit restano chiusi", () => {
     const c = leggi("app/api/motore/pulizia/route.ts");
     expect(c).toContain("webhook_eventi_stripe");
   });
+
+  test("modo sicuro: ferma email e replica AI, non la cassa", () => {
+    // il freno esiste
+    const lib = leggi("lib/motore/modo-sicuro.ts");
+    expect(lib).toContain("modoSicuroAttivo");
+    // ...ed è cablato nei tre automatismi giusti
+    expect(senzaCommenti(leggi("app/api/motore/segui/route.ts"))).toContain("modoSicuroAttivo");
+    expect(senzaCommenti(leggi("lib/recupero/esegui.ts"))).toContain("modoSicuroAttivo");
+    expect(senzaCommenti(leggi("lib/ai/replica.ts"))).toContain("modoSicuroAttivo");
+    // NON deve toccare la cassa: il webhook di Stripe non lo conosce
+    expect(leggi("app/api/stripe/webhook/route.ts")).not.toContain("modoSicuroAttivo");
+    // la migrazione della tabella è nel repo
+    expect(leggi("supabase/2026-08-26-modo-sicuro.sql")).toContain("impostazioni");
+  });
 });

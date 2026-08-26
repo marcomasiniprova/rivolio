@@ -1,4 +1,5 @@
 import { SERVIZIO_ATTIVO, supabaseServizio } from "@/lib/supabase/servizio";
+import { modoSicuroAttivo } from "@/lib/motore/modo-sicuro";
 import { casa } from "@/lib/email/posta";
 import { aeroporto } from "@/lib/voli/distanza";
 import { inItaliano } from "@/lib/voli/aeroporti";
@@ -69,6 +70,12 @@ export async function eseguiRecupero(): Promise<EsitoRecupero> {
   if (!RECUPERO_ATTIVO) return { ok: true, spento: true, guardate: 0, mandate: 0 };
   if (!SERVIZIO_ATTIVO)
     return { ok: false, guardate: 0, mandate: 0, motivo: "SUPABASE_SECRET_KEY assente" };
+
+  /* 🔴 MODO SICURO: l'interruttore d'emergenza ferma anche i recuperi via
+     email. Non è un guasto, è una pausa: nessuna riga guardata, nessuna
+     mandata. */
+  if (await modoSicuroAttivo())
+    return { ok: true, spento: true, guardate: 0, mandate: 0, motivo: "modo sicuro acceso" };
 
   const sb = supabaseServizio();
   const dalGiorno = new Date(

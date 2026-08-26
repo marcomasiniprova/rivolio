@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { chiamataAutorizzata } from "@/lib/motore/autorizza";
+import { modoSicuroAttivo } from "@/lib/motore/modo-sicuro";
 import { SERVIZIO_ATTIVO } from "@/lib/supabase/servizio";
 import {
   eventiRegistrati,
@@ -251,6 +252,22 @@ async function recuperaReplica(
 
 async function giroSegui({ budgetMs = 8000 } = {}) {
   if (!SERVIZIO_ATTIVO) return { ok: false as const, motivo: "SUPABASE_SECRET_KEY assente." };
+
+  /* 🔴 MODO SICURO: se l'interruttore d'emergenza è acceso, le email
+     automatiche restano ferme. Il giro non fallisce (non è un guasto): dice
+     che è in pausa e non manda niente. Check, verdetto e pagamento non
+     passano di qui e restano vivi. */
+  if (await modoSicuroAttivo()) {
+    return {
+      ok: true as const,
+      aperte: 0,
+      esaminate: 0,
+      recuperati: [],
+      recuperatiReplica: [],
+      inviate: [],
+      modoSicuro: true as const,
+    };
+  }
 
   const inizio = Date.now();
   const pratiche = await praticheDaSeguire();
