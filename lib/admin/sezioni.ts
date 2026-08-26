@@ -20,7 +20,6 @@ export type ChiaveSezione =
   | "recensioni"
   | "pratiche"
   | "traffico"
-  | "marketing"
   | "passaparola"
   | "affiliati"
   | "registro"
@@ -101,16 +100,6 @@ export const SEZIONI: Sezione[] = [
     href: "/admin/traffico",
     nome: "Traffico",
     sotto: "Da dove arrivano le persone e da che paese. Serve a non distribuire alla cieca.",
-  },
-  {
-    /* Accanto al Traffico: quello dice DA DOVE arrivano, questo dice come
-       far arrivare più persone dai motori AI (ChatGPT, Perplexity). Ci sono
-       i testi pronti da incollare e le 10 domande da fare ogni mese per
-       controllare se Rivolio viene citato. Richiesta di Valerio, 17/08. */
-    chiave: "marketing",
-    href: "/admin/marketing",
-    nome: "Marketing",
-    sotto: "Farsi citare dai motori AI: i testi pronti da incollare e il controllo di ogni mese.",
   },
   {
     /* Accanto a Traffico e Marketing, il terzo pezzo della crescita: su un
