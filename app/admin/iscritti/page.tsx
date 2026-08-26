@@ -1,39 +1,30 @@
 import { Scheda } from "@/components/admin/Grafici";
-import { Avviso, Bollo, Kpi, Vuoto } from "@/components/admin/Pezzi";
-import { dataIt } from "@/lib/admin/dati";
+import { Avviso, Kpi, Vuoto } from "@/components/admin/Pezzi";
+import ElencoIscritti, { type RigaIscritto } from "@/components/admin/iscritti/ElencoIscritti";
 import { soloAdmin } from "@/lib/admin/guardia";
 import { SERVIZIO_ATTIVO, supabaseServizio } from "@/lib/supabase/servizio";
 
 /**
- * GLI ISCRITTI ALL'OSSERVATORIO.
+ * GLI ISCRITTI ALL'OSSERVATORIO (rifatta il 26/08, giro #96).
  *
- * Il numero che conta non è "quanti si sono iscritti" ma **quanti hanno
- * confermato**: l'iscrizione è a doppio consenso, e chi non ha cliccato
- * il link nella posta non riceverà mai niente. Contarlo fra gli iscritti
+ * Il numero che conta non è «quanti si sono iscritti» ma quanti hanno
+ * CONFERMATO: l'iscrizione è a doppio consenso, e chi non ha cliccato il
+ * link nella posta non riceverà mai niente. Contarlo fra gli iscritti
  * gonfierebbe una lista che poi non apre nessuno.
  *
- * ⚠️ Chi disdice NON viene cancellato, e non è una dimenticanza: la riga
- * resta come prova del consenso e come promemoria di non riscrivergli fra
- * un mese. Qui si vede, marcata.
+ * ⚠️ Chi disdice NON viene cancellato: la riga resta come prova del consenso
+ * e come promemoria di non riscrivergli. Qui si vede, marcato.
+ *
+ * ⚠️ I TRE NUMERI IN CIMA LI CONTA IL DATABASE su TUTTA la lista, non sulle
+ * 200 righe lette per l'elenco: al 201esimo iscritto smetterebbero di
+ * crescere senza dirlo (difetto trovato il 12/08).
  */
 export const dynamic = "force-dynamic";
-
-type RigaIscritto = {
-  id: string;
-  email: string;
-  comune: string | null;
-  creato_il: string;
-  confermato_il: string | null;
-  disdetto_il: string | null;
-};
 
 export default async function PaginaIscritti() {
   /* Prima riga, sempre. Vedi lib/admin/guardia.ts. */
   await soloAdmin();
 
-  /* Niente uscita anticipata quando manca la chiave: l'intelaiatura resta
-     in piedi coi numeri marcati "non letto". Una pagina che si riduce a un
-     riquadro rosso non fa capire cosa ci sarà quando funzionerà. */
   let righe: RigaIscritto[] = [];
   let nonLetto = !SERVIZIO_ATTIVO;
   let nVivi: number | null = null;
@@ -41,13 +32,6 @@ export default async function PaginaIscritti() {
   let nUsciti: number | null = null;
 
   if (SERVIZIO_ATTIVO) {
-    /* 🔴 I TRE NUMERI IN CIMA SI CONTAVANO SULLE SOLE 200 RIGHE LETTE per
-       l'elenco, ma erano etichettati come i numeri della lista intera:
-       al 201esimo iscritto avrebbero smesso di crescere senza dirlo, e
-       "Iscritti veri" e' il numero su cui si decide se una newsletter
-       vale la pena. Adesso li conta il DATABASE su tutte le righe;
-       l'elenco resta alle ultime 200 perche' e' un elenco.
-       Trovato dall'ispezione del 12/08. */
     const partenza = () =>
       supabaseServizio().from("iscritti").select("id", { count: "exact", head: true });
     const [
@@ -75,9 +59,15 @@ export default async function PaginaIscritti() {
     nUsciti = eUsciti ? null : (cUsciti ?? 0);
   }
 
-  /** I numeri VERI, contati dal database. null = non letto. */
   const q = (v: number | null) => (v === null ? "non letto" : String(v));
-  const n = (v: number) => (nonLetto ? "non letto" : String(v));
+
+  /* La salute della lista: quanti, fra chi si è iscritto, hanno poi
+     confermato. Solo con un denominatore vero (vivi + in attesa): le
+     disdette sono gente che aveva già confermato, non le contiamo qui. */
+  const perConferma =
+    nVivi !== null && nAttesa !== null && nVivi + nAttesa > 0
+      ? Math.round((nVivi / (nVivi + nAttesa)) * 100)
+      : null;
 
   return (
     <div className="flex flex-col gap-5">
@@ -94,30 +84,51 @@ export default async function PaginaIscritti() {
         )
       )}
 
-      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-3">
         <Kpi
           forte
           etichetta="Iscritti veri"
           valore={q(nVivi)}
-          nota="Hanno confermato e non hanno disdetto: sono gli unici a cui si può scrivere."
+          nota="Hanno confermato e non hanno disdetto: gli unici a cui si può scrivere."
         />
         <Kpi
           etichetta="In attesa di conferma"
           valore={q(nAttesa)}
           nota="Hanno lasciato l'email ma non hanno cliccato il link. Non ricevono niente."
         />
-        <Kpi etichetta="Disdette" valore={q(nUsciti)} nota="La riga resta come prova del consenso." />
         <Kpi
-          etichetta="Righe mostrate"
-          valore={n(righe.length)}
-          nota="Le ultime 200, dalla più recente. I tre numeri qui accanto invece li conta il database su tutta la lista."
+          etichetta="Disdette"
+          valore={q(nUsciti)}
+          nota="La riga resta come prova del consenso."
         />
       </div>
 
-      <Scheda
-        titolo="La lista"
-        sotto="Dalla più recente. Il verde è chi riceverà davvero le email."
-      >
+      {/* La salute della lista: la barra di chi ha confermato. */}
+      {perConferma !== null && (
+        <div className="rounded-[14px] border border-bordo bg-white p-4 sm:p-5">
+          <div className="flex items-baseline justify-between gap-3">
+            <p className="text-[13.5px] font-medium text-inchiostro">
+              Su 100 iscritti, <strong className="text-verde-scuro">{perConferma}</strong> hanno
+              confermato
+            </p>
+            <span className="numeri text-[12.5px] text-fumo-2">
+              {nVivi} su {nVivi! + nAttesa!}
+            </span>
+          </div>
+          <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-nebbia-2">
+            <div
+              className="h-full rounded-full bg-verde transition-[width] duration-500"
+              style={{ width: `${perConferma}%` }}
+            />
+          </div>
+          <p className="mt-2 text-[12px] leading-relaxed text-fumo-2">
+            È il doppio consenso: chi non clicca il link nella posta resta in attesa e non riceve
+            l&apos;email dell&apos;Osservatorio.
+          </p>
+        </div>
+      )}
+
+      <Scheda titolo="La lista" sotto="Le ultime 200, dalla più recente. Filtra per stato o cerca.">
         {righe.length === 0 ? (
           <Vuoto
             titolo={nonLetto ? "Non letto." : "Nessuna iscrizione, ancora."}
@@ -128,71 +139,14 @@ export default async function PaginaIscritti() {
             }
           />
         ) : (
-          <>
-            {/* Da 640 in su la tabella; sotto, una scheda per riga: quattro
-                colonne dentro 390 punti si spezzavano illeggibili. */}
-            <div className="-mx-4 hidden overflow-x-auto sm:-mx-5 sm:block">
-            <table className="w-full min-w-[560px] text-[13.5px]">
-              <thead>
-                <tr className="border-b border-bordo text-left text-[11px] uppercase tracking-[0.1em] text-fumo-2">
-                  <th className="px-4 py-2 font-medium sm:px-5">Email</th>
-                  <th className="px-4 py-2 font-medium">Comune</th>
-                  <th className="px-4 py-2 font-medium">Iscritto il</th>
-                  <th className="px-4 py-2 pr-4 font-medium sm:pr-5">Stato</th>
-                </tr>
-              </thead>
-              <tbody>
-                {righe.map((r) => (
-                  <tr key={r.id} className="border-b border-bordo/60 last:border-0">
-                    <td className="max-w-[240px] truncate px-4 py-2.5 sm:px-5" title={r.email}>
-                      {r.email}
-                    </td>
-                    <td className="px-4 py-2.5 text-fumo">{r.comune ?? "-"}</td>
-                    <td className="px-4 py-2.5 text-fumo">{dataIt(r.creato_il)}</td>
-                    <td className="px-4 py-2.5 pr-4 sm:pr-5">
-                      {r.disdetto_il ? (
-                        <Bollo tono="rosso">uscito il {dataIt(r.disdetto_il)}</Bollo>
-                      ) : r.confermato_il ? (
-                        <Bollo tono="verde">confermato</Bollo>
-                      ) : (
-                        <Bollo tono="attesa">non ha confermato</Bollo>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            </div>
-
-            <ul className="flex flex-col gap-2.5 sm:hidden">
-              {righe.map((r) => (
-                <li key={r.id} className="rounded-[12px] border border-bordo bg-nebbia/50 p-3.5">
-                  <p className="truncate text-[14px] font-medium" title={r.email}>
-                    {r.email}
-                  </p>
-                  <p className="mt-1 text-[12.5px] text-fumo-2">
-                    {r.comune ? `${r.comune} · ` : ""}iscritto il {dataIt(r.creato_il)}
-                  </p>
-                  <p className="mt-2">
-                    {r.disdetto_il ? (
-                      <Bollo tono="rosso">uscito il {dataIt(r.disdetto_il)}</Bollo>
-                    ) : r.confermato_il ? (
-                      <Bollo tono="verde">confermato</Bollo>
-                    ) : (
-                      <Bollo tono="attesa">non ha confermato</Bollo>
-                    )}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          </>
+          <ElencoIscritti righe={righe} />
         )}
       </Scheda>
 
       <p className="pb-2 text-[12.5px] leading-relaxed text-fumo-2">
-        Le email partono solo verso chi ha confermato. Finché il dominio non è verificato su
-        Resend, partono comunque verso il solo indirizzo con cui è stato aperto l&apos;account:
-        lo decide Resend, non il nostro codice.
+        Le email partono solo verso chi ha confermato. Finché il dominio non è verificato su Resend,
+        partono comunque verso il solo indirizzo con cui è stato aperto l&apos;account: lo decide
+        Resend, non il nostro codice.
       </p>
     </div>
   );
