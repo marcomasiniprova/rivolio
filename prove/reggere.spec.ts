@@ -97,7 +97,7 @@ test.describe("I promemoria partono da soli", () => {
 });
 
 test.describe("Il freno regge anche con tanta gente", () => {
-  test("le rotte che ci costano soldi usano il freno condiviso", () => {
+  test("le rotte che ci costano soldi passano dal freno", () => {
     const care = [
       "app/api/verifica/route.ts",
       "app/api/leggi-carta/route.ts",
@@ -106,38 +106,24 @@ test.describe("Il freno regge anche con tanta gente", () => {
       "app/api/pratiche/[id]/risposta/route.ts",
     ];
     for (const f of care) {
-      expect(leggi(f), `${f} usa ancora solo il contatore in memoria`).toContain(
-        "oltreIlLimiteCondiviso",
-      );
+      expect(leggi(f), `${f} non passa dal freno`).toContain("oltreIlLimiteCondiviso");
     }
   });
 
-  test("senza configurazione non blocca nessuno: ripiega, non chiude", () => {
-    /* Un freno rotto che chiude il sito a tutti fa più danni di un freno
-       assente: il primo ferma le vendite, il secondo costa qualche euro. */
+  test("il freno e' il contatore in memoria: niente piu' Redis", () => {
+    /* Il 26/08 Valerio ha fatto togliere il cervello condiviso su Redis
+       (Upstash): non era mai stato acceso, e la spesa vera la protegge il
+       tetto sul fornitore. Questa prova vieta di riportarlo dentro di
+       soppiatto: niente chiamata a Upstash, niente contatore remoto. */
     const testo = leggi("lib/api/limite.ts");
-    const i = testo.indexOf("export async function oltreIlLimiteCondiviso");
+    expect(testo).not.toContain("process.env.UPSTASH");
+    expect(testo).not.toContain("conteggioCondiviso");
+    const i = testo.indexOf("function oltreIlLimiteCondiviso");
     expect(i).toBeGreaterThan(0);
-    const corpo = testo.slice(i);
-    expect(corpo).toContain("if (n === null) return oltreIlLimite(");
+    expect(testo.slice(i)).toContain("return Promise.resolve(oltreIlLimite(");
   });
 
-  test("il contatore scade da solo, se no dopo un'ora non passa più nessuno", () => {
-    expect(leggi("lib/api/limite.ts")).toContain('"EXPIRE"');
-  });
-
-  test("l'attesa massima è breve: la paga chi sta aspettando il verdetto", () => {
-    const testo = leggi("lib/api/limite.ts");
-    const m = testo.match(/AbortSignal\.timeout\((\d+)\)/);
-    expect(m).not.toBeNull();
-    expect(Number(m![1])).toBeLessThanOrEqual(2000);
-  });
-
-  test("le due variabili nuove sono spiegate nel pannello", () => {
-    /* Una variabile che nessuno sa di dover mettere è una variabile che
-       non verrà messa mai. */
-    const pagina = leggi("app/admin/impostazioni/page.tsx");
-    expect(pagina).toContain("UPSTASH_REDIS_REST_URL");
-    expect(pagina).toContain("UPSTASH_REDIS_REST_TOKEN");
+  test("Redis non torna nemmeno fra le variabili del pannello", () => {
+    expect(leggi("app/admin/impostazioni/page.tsx")).not.toContain("UPSTASH");
   });
 });
