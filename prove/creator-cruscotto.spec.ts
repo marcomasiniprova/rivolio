@@ -12,9 +12,13 @@ const leggi = (p: string) => readFileSync(join(R, p), "utf8");
  */
 test.describe("La vista del creator", () => {
   test("non mostra i margini interni (IVA, cassa, margine)", () => {
-    const src = leggi("app/creator/cruscotto/page.tsx");
+    /* Si guarda il codice VIVO, non i commenti: la nota in cima spiega che
+       il creator NON vede l'IVA, e per dirlo la cita. È giusto che lo faccia. */
+    const vivo = leggi("app/creator/cruscotto/page.tsx")
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/\/\/[^\n]*/g, "");
     for (const proibito of ["IVA", "Stripe", "margineCompleto", "CASSA_PERCENTO", "exIva"]) {
-      expect(src, `il creator non deve vedere "${proibito}"`).not.toContain(proibito);
+      expect(vivo, `il creator non deve vedere "${proibito}"`).not.toContain(proibito);
     }
   });
 
