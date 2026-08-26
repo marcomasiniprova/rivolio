@@ -153,7 +153,24 @@ export async function creaSessioneCheckout(opts: {
        cassa torna allo Stripe standard. La versione API richiesta da Stripe
        (2025-03-31.basil o successiva) è già coperta dal pacchetto stripe 22.5. */
     if (managedPaymentsAttivo()) parametri.managed_payments = { enabled: true };
-    const sessione = await stripe().checkout.sessions.create(parametri);
+
+    /* 🔴 CHIAVE DI IDEMPOTENZA IN USCITA (audit 26/08). Un doppio clic su
+       «Prepara la pratica», o un ritentativo della funzione Netlify dopo un
+       timeout, senza questa creerebbe DUE sessioni di pagamento per lo stesso
+       utente. Con una chiave stabile (prodotto + verifica + tipo) Stripe
+       riconosce il retry e riusa la stessa sessione. La finestra di 24h di
+       Stripe coincide con la scadenza della sessione, quindi non resta mai
+       incastrata una sessione scaduta. */
+    const rif = opts.riferimento ?? opts.metadata.verifica_id ?? "";
+    const chiaveIdem = rif
+      ? [opts.metadata.prodotto ?? "pratica", rif, opts.metadata.tipo ?? ""]
+          .filter(Boolean)
+          .join(":")
+      : undefined;
+    const sessione = await stripe().checkout.sessions.create(
+      parametri,
+      chiaveIdem ? { idempotencyKey: chiaveIdem } : undefined,
+    );
     return sessione.url;
   } catch (e) {
     const motivo = e instanceof Error ? e.message : String(e);

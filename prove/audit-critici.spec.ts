@@ -92,4 +92,26 @@ test.describe("Gli importanti dell'audit restano chiusi", () => {
     const c = leggi("app/api/stripe/webhook/route.ts");
     expect(c).toContain("analisiPagataPronta");
   });
+
+  test("webhook Stripe: dedup sull'id evento (prendi/rilascia)", () => {
+    const c = senzaCommenti(leggi("app/api/stripe/webhook/route.ts"));
+    expect(c).toContain("webhook_eventi_stripe");
+    expect(c).toContain("prendiEvento");
+    // si prende l'evento PRIMA di evadere, e si rilascia se fallisce (5xx)
+    expect(c).toContain("rilasciaEvento");
+    // la migrazione della tabella dedup è nel repo
+    const sql = leggi("supabase/2026-08-26-webhook-dedup.sql");
+    expect(sql).toContain("webhook_eventi_stripe");
+    expect(sql).toContain("pratiche_ordine_pagamento_unico");
+  });
+
+  test("checkout Stripe: chiave di idempotenza in uscita", () => {
+    const c = senzaCommenti(leggi("lib/stripe.ts"));
+    expect(c).toContain("idempotencyKey");
+  });
+
+  test("la pulizia sfoltisce il registro dedup dei webhook", () => {
+    const c = leggi("app/api/motore/pulizia/route.ts");
+    expect(c).toContain("webhook_eventi_stripe");
+  });
 });

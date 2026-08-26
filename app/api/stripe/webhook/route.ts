@@ -5,6 +5,44 @@ import { evadiPagamentoPratica } from "@/lib/pratiche/evasione";
 import type { TipoPratica } from "@/lib/pratiche/pratiche";
 import { registraCommissione } from "@/lib/affiliati/commissioni";
 import { analisiPagataPronta } from "@/lib/email/check-pronto";
+import { SERVIZIO_ATTIVO, supabaseServizio } from "@/lib/supabase/servizio";
+
+/**
+ * 🔴 DEDUP SULL'ID EVENTO (audit 26/08). Stripe consegna at-least-once e
+ * rimanda lo stesso pagamento per 3 giorni: lo stesso evt_... può arrivare
+ * due volte. Si «prende» l'evento scrivendo il suo id: se c'è già, è stato
+ * gestito e si salta. Se la lavorazione fallisce (5xx), si RILASCIA il posto
+ * così il ritentativo di Stripe rielabora.
+ */
+async function prendiEvento(eventId: string, tipo: string): Promise<"nuovo" | "gia" | "errore"> {
+  if (!SERVIZIO_ATTIVO) return "errore";
+  try {
+    const { data, error } = await supabaseServizio()
+      .from("webhook_eventi_stripe")
+      .insert({ event_id: eventId, tipo })
+      .select("event_id");
+    if (error) {
+      if (error.code === "23505") return "gia";
+      if (!/does not exist|schema cache/i.test(error.message)) {
+        console.error("[stripe] presa dell'evento fallita:", error.message);
+      }
+      return "errore";
+    }
+    return data && data.length > 0 ? "nuovo" : "errore";
+  } catch (e) {
+    console.error("[stripe] presa dell'evento fallita:", e);
+    return "errore";
+  }
+}
+
+async function rilasciaEvento(eventId: string): Promise<void> {
+  if (!SERVIZIO_ATTIVO) return;
+  try {
+    await supabaseServizio().from("webhook_eventi_stripe").delete().eq("event_id", eventId);
+  } catch (e) {
+    console.error("[stripe] rilascio dell'evento fallito:", e);
+  }
+}
 
 /**
  * Il webhook di Stripe: qui un pagamento diventa una pratica.
@@ -71,6 +109,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, nota: `Non ancora pagato (${sessione.payment_status}).` });
   }
 
+  /* Si «prende» l'evento PRIMA di agire: se è già stato gestito (ritentativo
+     di Stripe, o il secondo evento sulla stessa sessione), si salta. "errore"
+     = dedup non disponibile: si procede lo stesso, perché l'evasione è già
+     idempotente di suo (vincolo unico su verifica e ordine). */
+  const preso = await prendiEvento(evento.id, evento.type);
+  if (preso === "gia") {
+    return NextResponse.json({ ok: true, nota: "Evento già gestito." });
+  }
+
   const meta = sessione.metadata ?? {};
   const verificaId =
     (typeof meta.verifica_id === "string" && meta.verifica_id) || sessione.client_reference_id || null;
@@ -117,5 +164,11 @@ export async function POST(req: NextRequest) {
     venditore: "Stripe",
     ref,
   });
+  /* Se la lavorazione chiede un ritentativo (5xx), si RILASCIA la presa
+     dell'evento: così il prossimo tentativo di Stripe rielabora invece di
+     trovarlo «già gestito» e saltarlo. Se è andata (2xx), la presa resta. */
+  if (esito.http >= 500 && preso === "nuovo") {
+    await rilasciaEvento(evento.id);
+  }
   return NextResponse.json(esito.body, { status: esito.http });
 }

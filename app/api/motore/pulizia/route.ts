@@ -60,6 +60,24 @@ export async function POST(req: NextRequest) {
     risultato.verificheAnonimizzate = `errore: ${String(e)}`;
   }
 
+  /* 3) Il registro anti-doppione dei webhook Stripe (audit 26/08). Serve
+     solo a riconoscere un evento rimandato: Stripe ritenta un webhook per 3
+     giorni, quindi una riga più vecchia di 7 giorni non protegge più niente
+     e va tolta perché la tabella non cresca all'infinito. */
+  try {
+    const { count, error } = await db
+      .from("webhook_eventi_stripe")
+      .delete({ count: "exact" })
+      .lt("ricevuto_il", giornoIso(7));
+    if (error && /does not exist|schema cache/i.test(error.message)) {
+      risultato.webhookEventiPuliti = "tabella assente";
+    } else {
+      risultato.webhookEventiPuliti = error ? `errore: ${error.message}` : (count ?? 0);
+    }
+  } catch (e) {
+    risultato.webhookEventiPuliti = `errore: ${String(e)}`;
+  }
+
   console.log("[pulizia]", risultato);
   return NextResponse.json({ ok: true, ...risultato });
 }
