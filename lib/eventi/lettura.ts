@@ -127,7 +127,100 @@ function racconta(r: RigaGrezza): string {
   }
 }
 
+/**
+ * I NUMERI, CONTATI DAL DATABASE (audit 26/08).
+ *
+ * 🔴 Prima si caricavano fino a 20.000 righe in memoria e si sommava in JS:
+ * oltre quel tetto i totali (incassi, conversione del muro, provenienze) si
+ * accorciavano in SILENZIO, dominati dal flusso delle visite. Adesso conta e
+ * somma il database (funzioni `cruscotto_numeri` e `cruscotto_gruppi`), esatto
+ * a qualsiasi volume, e la conversione del muro usa gli sblocchi DISTINTI per
+ * ordine (un reload della pagina di successo non la gonfia più).
+ *
+ * ⚠️ Se le funzioni non ci sono (migrazione non applicata) o il database non
+ * risponde, si DEGRADA alla vecchia lettura in memoria: un pannello coi numeri
+ * un po' meno esatti è meglio di un pannello rotto.
+ */
 export async function leggiCruscotto(quanteRighe = 40): Promise<Cruscotto> {
+  if (!SERVIZIO_ATTIVO) return VUOTO;
+  try {
+    const db = supabaseServizio();
+    const adesso = new Date();
+    const daIso = new Date(adesso.getTime() - 7 * 86_400_000).toISOString();
+
+    const [numRes, gruppiRes, ultimiRes] = await Promise.all([
+      db.rpc("cruscotto_numeri", { p_da: daIso, p_now: adesso.toISOString() }),
+      db.rpc("cruscotto_gruppi", { p_da: daIso }),
+      db
+        .from("eventi")
+        .select("creato_il, tipo, volo, esito, importo, provenienza")
+        .order("creato_il", { ascending: false })
+        .limit(quanteRighe),
+    ]);
+    if (numRes.error || gruppiRes.error) {
+      throw new Error(numRes.error?.message ?? gruppiRes.error?.message ?? "rpc cruscotto");
+    }
+
+    const n = numRes.data as {
+      settimana: Record<string, number>;
+      oggi: Record<string, number>;
+      incasso_settimana: number;
+      incasso_oggi: number;
+      muri: number;
+      sbloccati: number;
+    };
+    const g = (gruppiRes.data ?? {}) as { provenienze?: Conteggio[]; paesi?: Conteggio[] };
+
+    const record = (o: Record<string, number> | null | undefined): Record<TipoEvento, number> => ({
+      visita: o?.visita ?? 0,
+      check: o?.check ?? 0,
+      muro: o?.muro ?? 0,
+      sbloccato: o?.sbloccato ?? 0,
+      verdetto: o?.verdetto ?? 0,
+      pratica: o?.pratica ?? 0,
+      pagato: o?.pagato ?? 0,
+      iscritto: o?.iscritto ?? 0,
+      invito: o?.invito ?? 0,
+      guasto: o?.guasto ?? 0,
+    });
+
+    const prov = g.provenienze ?? [];
+    const aiMap = new Map<string, number>();
+    for (const r of prov) {
+      const motore = sorgenteAI(r.nome);
+      if (motore) aiMap.set(motore, (aiMap.get(motore) ?? 0) + r.quanti);
+    }
+    const aiMotori = [...aiMap.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([nome, quanti]) => ({ nome, quanti }));
+
+    const ultimi = ((ultimiRes.data ?? []) as RigaGrezza[]).map((r) => ({
+      quando: r.creato_il,
+      tipo: r.tipo,
+      testo: racconta(r),
+      euro: r.importo === null ? null : Number(r.importo),
+    }));
+
+    return {
+      oggi: record(n.oggi),
+      settimana: record(n.settimana),
+      incassoOggi: Number(n.incasso_oggi ?? 0),
+      incassoSettimana: Number(n.incasso_settimana ?? 0),
+      provenienze: prov.slice(0, 8),
+      paesi: g.paesi ?? [],
+      aiMotori,
+      ultimi,
+      conversioneMuro: n.muri > 0 ? Math.round((n.sbloccati / n.muri) * 1000) / 10 : null,
+      /* Contato dal database: niente tetto, niente numeri parziali. */
+      parziale: false,
+    };
+  } catch (e) {
+    console.error("[cruscotto] via SQL fallita, degrado alla lettura in memoria:", e);
+    return leggiCruscottoInMemoria(quanteRighe);
+  }
+}
+
+async function leggiCruscottoInMemoria(quanteRighe = 40): Promise<Cruscotto> {
   if (!SERVIZIO_ATTIVO) return VUOTO;
   try {
     const db = supabaseServizio();
@@ -404,7 +497,55 @@ const ETICHETTA_GIORNO = new Intl.DateTimeFormat("it-IT", {
  * Gli zeri VERI invece restano zeri: un giorno letto in cui non è
  * successo niente è un dato, e va disegnato.
  */
+/**
+ * La serie giorno per giorno, CONTATA DAL DATABASE (audit 26/08): niente più
+ * tetto a 20.000 righe che tagliava i giorni più vecchi. Se la funzione non
+ * c'è, si degrada alla lettura in memoria.
+ */
 export async function leggiSerie(giorni = 14): Promise<GiornoSerie[] | null> {
+  if (!SERVIZIO_ATTIVO) return null;
+  try {
+    const db = supabaseServizio();
+    const oggiRoma = GIORNO_ROMA.format(new Date());
+    const ancora = Date.parse(`${oggiRoma}T12:00:00Z`);
+    const scheletro: GiornoSerie[] = [];
+    for (let i = giorni - 1; i >= 0; i--) {
+      const quando = new Date(ancora - i * 86_400_000);
+      scheletro.push({
+        giorno: GIORNO_ROMA.format(quando),
+        etichetta: ETICHETTA_GIORNO.format(quando).replace(".", ""),
+        per: {},
+        idonei: 0,
+        euro: 0,
+        oggi: i === 0,
+      });
+    }
+    /* Due ore di margine per l'ora legale, come nella versione in memoria. */
+    const da = new Date(ancora - (giorni - 1) * 86_400_000 - 14 * 3_600_000).toISOString();
+    const { data, error } = await db.rpc("serie_giorni", { p_da: da });
+    if (error) throw new Error(error.message);
+
+    const perGiorno = new Map(scheletro.map((s) => [s.giorno, s]));
+    for (const r of (data ?? []) as {
+      giorno: string;
+      per: Partial<Record<TipoEvento, number>>;
+      idonei: number;
+      euro: number;
+    }[]) {
+      const g = perGiorno.get(r.giorno);
+      if (!g) continue; // fuori finestra: è il margine delle due ore
+      g.per = r.per ?? {};
+      g.idonei = r.idonei ?? 0;
+      g.euro = Number(r.euro ?? 0);
+    }
+    return scheletro;
+  } catch (e) {
+    console.error("[serie] via SQL fallita, degrado alla lettura in memoria:", e);
+    return leggiSerieInMemoria(giorni);
+  }
+}
+
+async function leggiSerieInMemoria(giorni = 14): Promise<GiornoSerie[] | null> {
   if (!SERVIZIO_ATTIVO) return null;
   try {
     const db = supabaseServizio();
