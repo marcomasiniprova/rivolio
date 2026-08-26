@@ -4,6 +4,7 @@ import AntiCopia from "@/components/AntiCopia";
 import IndirizzoPulito from "@/components/IndirizzoPulito";
 import ScrollPesante from "@/components/ScrollPesante";
 import Visita from "@/components/Visita";
+import ContaClic from "@/components/creator/ContaClic";
 import AncoreLisce from "@/components/AncoreLisce";
 import "./globals.css";
 
@@ -118,6 +119,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <IndirizzoPulito />
         <ScrollPesante />
         <Visita />
+        <ContaClic />
         <AncoreLisce />
         {children}
       </body>
