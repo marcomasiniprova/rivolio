@@ -39,3 +39,21 @@ test.describe("La vista del creator", () => {
     expect(src).toContain("segna_clic_affiliato");
   });
 });
+
+test.describe("Numeri deterministici e link corto", () => {
+  test("i formattatori non usano toLocaleString (rompeva l'idratazione oltre mille)", () => {
+    for (const f of [
+      "components/creator/DashboardCreator.tsx",
+      "components/admin/affiliati/PannelloAffiliati.tsx",
+    ]) {
+      const vivo = leggi(f).replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
+      expect(vivo, `${f} usa toLocaleString sui numeri`).not.toContain("toLocaleString(");
+    }
+  });
+
+  test("il link del creator e' corto: /creator/<token>", () => {
+    expect(leggi("lib/affiliati/accesso.ts")).toContain("/creator/${token}");
+    expect(leggi("app/creator/[slug]/page.tsx")).toContain("x.token === slug");
+  });
+});
+
