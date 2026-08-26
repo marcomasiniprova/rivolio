@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { soloAdmin } from "@/lib/admin/guardia";
-import QuandoArrivaIlDominio from "@/components/admin/QuandoArrivaIlDominio";
 import { chatIdDaScoprire } from "@/lib/eventi/telegram";
 
 /**
@@ -373,8 +372,6 @@ export default async function PaginaImpostazioni() {
         Trigger deploy → Clear cache and deploy site</em>): questi valori
         entrano nel sito quando viene costruito, non quando qualcuno lo apre.
       </p>
-
-      <QuandoArrivaIlDominio />
     </div>
   );
 }
