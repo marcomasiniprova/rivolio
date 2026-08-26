@@ -60,3 +60,36 @@ test.describe("I critici dell'audit restano chiusi", () => {
     expect(grant.slice(0, grant.indexOf(")"))).not.toContain("ruolo");
   });
 });
+
+test.describe("Gli importanti dell'audit restano chiusi", () => {
+  test("muro del check: il cancello è atomico (riserva prima dell'analisi)", () => {
+    const c = leggi("app/api/verifica/route.ts");
+    expect(c).toContain("riservaCheckAtomica");
+    expect(c).toContain("rilasciaCheck");
+  });
+
+  test("la seconda fonte non congela un primario già certo", () => {
+    const c = senzaCommenti(leggi("lib/voli/incrocio.ts"));
+    // lo short-circuit del primario verificato viene PRIMA del ramo discordanti
+    const primario = c.indexOf("orarioVerificato === true");
+    const discordanti = c.indexOf("discordanti: true");
+    expect(primario).toBeGreaterThan(0);
+    expect(primario).toBeLessThan(discordanti);
+  });
+
+  test("il riepilogo serale copre anche l'inverno (19 e 20 UTC)", () => {
+    const c = leggi("netlify/functions/riepilogo.mjs");
+    expect(c).toContain('schedule: "0 19,20 * * *"');
+  });
+
+  test("i numeri del pannello si contano dal database", () => {
+    const c = leggi("lib/eventi/lettura.ts");
+    expect(c).toContain("cruscotto_numeri");
+    expect(c).toContain("serie_giorni");
+  });
+
+  test("il check pagato ha la rete di sicurezza via email", () => {
+    const c = leggi("app/api/stripe/webhook/route.ts");
+    expect(c).toContain("analisiPagataPronta");
+  });
+});
