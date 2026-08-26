@@ -62,7 +62,7 @@ export async function guardato(id: string): Promise<EsitoAdmin> {
     .select("id");
   if (error || !cambiata?.length) return { errore: "Non salvato: ricarica la pagina." };
 
-  revalidatePath("/admin/verdetti");
+  revalidatePath("/admin/pratiche");
   revalidatePath("/admin");
   return { ok: "Segnato come guardato." };
 }
@@ -160,7 +160,7 @@ export async function correggiVerifica(
     ].join("\n"),
   );
 
-  revalidatePath("/admin/verdetti");
+  revalidatePath("/admin/pratiche");
   revalidatePath("/admin");
   return { ok: `Corretta in "${esitoGiusto}". Il caso è nei log per il golden set.` };
 }

@@ -48,7 +48,7 @@ test.describe("Il pannello non promette più un blocco che non esiste", () => {
        trattiene un euro. */
     const schermate = [
       "app/admin/page.tsx",
-      "app/admin/verdetti/page.tsx",
+      "components/admin/ControlloVerdetti.tsx",
       "app/admin/impostazioni/page.tsx",
       "lib/admin/dati.ts",
     ];
@@ -64,7 +64,7 @@ test.describe("Il pannello non promette più un blocco che non esiste", () => {
   });
 
   test("il bottone non si chiama più Conferma: non confermava niente", () => {
-    const vive = righeVive(leggi("app/admin/verdetti/page.tsx")).join("\n");
+    const vive = righeVive(leggi("components/admin/ControlloVerdetti.tsx")).join("\n");
     expect(vive).toContain("Va bene");
     expect(vive).not.toContain(">Conferma<");
   });
@@ -72,7 +72,7 @@ test.describe("Il pannello non promette più un blocco che non esiste", () => {
 
 test.describe("L'elenco è dal più recente", () => {
   test("l'ordinamento della coda dei verdetti è discendente", () => {
-    const testo = leggi("app/admin/verdetti/page.tsx");
+    const testo = leggi("components/admin/ControlloVerdetti.tsx");
     const i = testo.indexOf('.eq("conferma", "in_attesa")');
     expect(i).toBeGreaterThan(0);
     const dopo = testo.slice(i, i + 600);
@@ -107,7 +107,7 @@ test.describe("Quello che ferma davvero una vendita", () => {
 
   test("correggere senza scrivere il motivo non si può", () => {
     // Una vendita si blocca con un motivo scritto, non con un clic.
-    const testo = leggi("app/admin/verdetti/page.tsx");
+    const testo = leggi("components/admin/ControlloVerdetti.tsx");
     const i = testo.indexOf('name="nota"');
     expect(i).toBeGreaterThan(0);
     expect(testo.slice(i, i + 120)).toContain("required");

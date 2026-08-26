@@ -15,7 +15,6 @@ export type ChiaveSezione =
   | "mappa"
   | "motore"
   | "panoramica"
-  | "verdetti"
   | "recensioni"
   | "pratiche"
   | "traffico"
@@ -63,14 +62,6 @@ export const SEZIONI: Sezione[] = [
     sotto: "I soldi, il percorso delle persone e come sta andando la settimana.",
   },
   {
-    chiave: "verdetti",
-    href: "/admin/verdetti",
-    nome: "Verdetti",
-    /* ⚠️ Diceva «finché non la dai, nessuno paga»: non è più vero dal
-       12/08, quando il cancello è stato tolto dalla cassa. */
-    sotto: "Gli ultimi idonei, dal più recente: un controllo a campione che il motore dica la verità.",
-  },
-  {
     /* Accanto ai Verdetti: è l'altra coda che vuole il tuo occhio. Approvi
        una recensione e compare in landing da sola (richiesta di Valerio,
        15/08: «qualsiasi recensione io devo vederla e approvarla»). */
@@ -83,7 +74,7 @@ export const SEZIONI: Sezione[] = [
     chiave: "pratiche",
     href: "/admin/pratiche",
     nome: "Pratiche",
-    sotto: "Chi ha pagato, a che punto è, e cosa deve succedere adesso.",
+    sotto: "Chi ha pagato e a che punto è. In fondo, il controllo a campione dei verdetti.",
   },
   {
     chiave: "traffico",
