@@ -9,6 +9,7 @@ import { CHECK_A_PAGAMENTO } from "@/lib/check/ingresso";
 import { leggiCruscotto, leggiSerie, type GiornoSerie } from "@/lib/eventi/lettura";
 import { TELEGRAM_ATTIVO } from "@/lib/eventi/telegram";
 import { SERVIZIO_ATTIVO } from "@/lib/supabase/servizio";
+import { FISSI_MENSILI, TASSO_RIMBORSO_GARANZIA, contoPratica } from "@/lib/admin/economia";
 
 /**
  * LA PANORAMICA: la schermata che Valerio apre la mattina.
@@ -26,6 +27,8 @@ import { SERVIZIO_ATTIVO } from "@/lib/supabase/servizio";
 export const dynamic = "force-dynamic";
 
 const GIORNI = 14;
+
+const pct = (n: number) => `${Math.round(n * 100)}%`;
 
 /**
  * La variazione contro i giorni prima.
@@ -77,6 +80,7 @@ export default async function PaginaPanoramica() {
   const q = (n: number | null | undefined) => oNonLetto(n);
   const oggi = c.oggi;
   const settimana = c.settimana;
+  const conto = contoPratica();
 
   /* L'imbuto vive sui sette giorni e non su oggi: alle nove del mattino
      un imbuto di giornata è fatto di due righe e non dice niente. */
@@ -275,6 +279,35 @@ export default async function PaginaPanoramica() {
         }
       >
         <FattiInDiretta righe={c.ultimi} />
+      </Scheda>
+
+      {/* ── I COSTI, CON LA LORO FONTE ────────────────────────────
+          Stava nella sezione Economia, tolta il 26/08: qui è la prima
+          schermata che apri, accanto agli incassi. */}
+      <Scheda
+        titolo="I costi, con la loro fonte"
+        sotto="Trasparenza, come per i numeri che mostriamo all'utente. Le stime sono marcate."
+      >
+        <ul className="flex flex-col gap-2 text-[13.5px] text-fumo">
+          {Object.values(FISSI_MENSILI).map((f) => (
+            <li
+              key={f.nota}
+              className="flex items-baseline justify-between gap-3 border-b border-bordo/60 pb-2"
+            >
+              <span>{f.nota}</span>
+              <span className="numeri shrink-0 font-medium text-inchiostro">{euro(f.euro)}/mese</span>
+            </li>
+          ))}
+          <li className="flex items-baseline justify-between gap-3 pt-1">
+            <span>Stripe per pratica: ~5% + 0,25 € (Managed Payments, carta europea)</span>
+            <span className="numeri shrink-0 font-medium text-inchiostro">{euro(conto.cassa)}</span>
+          </li>
+          <li className="text-[12.5px] text-fumo-2">
+            <span className="numeri">*</span> Garanzia al {pct(TASSO_RIMBORSO_GARANZIA)}: stima
+            prudente, nessuna pratica ancora chiusa. OCR ~1 $/1000 pagine e AeroDataBox
+            0,00025 $/richiesta sono stime di listino.
+          </li>
+        </ul>
       </Scheda>
 
       <p className="pb-2 text-[12.5px] leading-relaxed text-fumo-2">

@@ -15,7 +15,6 @@ export type ChiaveSezione =
   | "mappa"
   | "motore"
   | "panoramica"
-  | "economia"
   | "verdetti"
   | "recensioni"
   | "pratiche"
@@ -62,15 +61,6 @@ export const SEZIONI: Sezione[] = [
     href: "/admin",
     nome: "Panoramica",
     sotto: "I soldi, il percorso delle persone e come sta andando la settimana.",
-  },
-  {
-    /* Subito dopo la Panoramica: quella dice quanto è entrato oggi, questa
-       dice quanto RESTA e dove si va (richiesta di Valerio, 14/08: «calcolami
-       quanto faccio e quanto costa tutto, salvalo nella whiteboard admin»). */
-    chiave: "economia",
-    href: "/admin/economia",
-    nome: "Economia",
-    sotto: "Quanto si fa e quanto costa, dal check alla compensazione. I tre scenari.",
   },
   {
     chiave: "verdetti",
