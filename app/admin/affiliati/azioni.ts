@@ -1,5 +1,6 @@
 "use server";
 
+import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { supabaseServer, utenteCollegato } from "@/lib/supabase/server";
 import { SERVIZIO_ATTIVO, supabaseServizio } from "@/lib/supabase/servizio";
@@ -69,6 +70,8 @@ export async function creaAffiliato(
     tipo_accordo: tipoAccordo,
     seguito: interoOpt(form.get("seguito")),
     bonus_fisso: euroOpt(form.get("bonus_fisso")),
+    // Il token del link corto e privato: rivolio.it/creator/<token>.
+    token: randomBytes(6).toString("hex"),
   };
 
   const db = supabaseServizio();

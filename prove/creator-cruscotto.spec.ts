@@ -14,7 +14,7 @@ test.describe("La vista del creator", () => {
   test("non mostra i margini interni (IVA, cassa, margine)", () => {
     /* Si guarda il codice VIVO, non i commenti: la nota in cima spiega che
        il creator NON vede l'IVA, e per dirlo la cita. È giusto che lo faccia. */
-    const vivo = leggi("app/creator/cruscotto/page.tsx")
+    const vivo = leggi("components/creator/DashboardCreator.tsx")
       .replace(/\/\*[\s\S]*?\*\//g, "")
       .replace(/\/\/[^\n]*/g, "");
     for (const proibito of ["IVA", "Stripe", "margineCompleto", "CASSA_PERCENTO", "exIva"]) {

@@ -1,20 +1,27 @@
 import { SERVIZIO_ATTIVO, supabaseServizio } from "@/lib/supabase/servizio";
-import { bonusiDi, prossimiBonus, PREZZO_SINGOLA, PREZZO_FAMIGLIA } from "./modello";
+import {
+  bonusiDi,
+  prossimiBonus,
+  progressoBonus,
+  BONUS,
+  GIORNI_PAGAMENTO,
+  PREZZO_SINGOLA,
+  PREZZO_FAMIGLIA,
+} from "./modello";
 
 /**
  * LE LETTURE PER IL PANNELLO: ogni creator coi suoi numeri veri, dal
  * database. Solo server (chiave di servizio).
  *
  * ⚠️ DEGRADA DA SOLO se la migrazione del 26/08 non è ancora applicata: le
- * colonne nuove (accordo, bonus, clic, variante) non ci sono, si legge il
- * minimo. Un pannello a metà è meglio di un pannello rotto.
+ * colonne nuove non ci sono, si legge il minimo. Un pannello a metà è meglio
+ * di un pannello rotto.
  */
 
 const SOGLIA_VARIANTE = (PREZZO_SINGOLA + PREZZO_FAMIGLIA) / 2;
+const GIORNI_ATTIVO = 7;
 const arrotonda = (n: number) => Math.round(n * 100) / 100;
 
-/* Le due letture si riassegnano col ripiego (meno colonne): un tipo lasco
-   tiene insieme la lettura piena e quella minima senza litigare coi tipi. */
 type Risp<T> = { data: T[] | null; error: { message: string } | null };
 
 export type CreatorPieno = {
@@ -28,6 +35,12 @@ export type CreatorPieno = {
   tipo_accordo: "performance" | "ibrido";
   seguito: number | null;
   click: number;
+  token: string | null;
+  ultimoClic: string | null;
+  /** L'ultimo segnale di vita: clic o vendita, il più recente. */
+  ultimoMovimento: string | null;
+  /** Attivo = un movimento negli ultimi 7 giorni. */
+  attivoDiRecente: boolean;
   nCheck: number;
   nSingola: number;
   nFamiglia: number;
@@ -58,6 +71,8 @@ type RigaAff = {
   bonus_pagato?: number | string | null;
   seguito?: number | null;
   click?: number | null;
+  token?: string | null;
+  ultimo_clic?: string | null;
 };
 type RigaComm = {
   affiliato_id: string;
@@ -66,6 +81,7 @@ type RigaComm = {
   prezzo_pagato: number | string;
   commissione: number | string;
   pagata_il: string | null;
+  creato_il?: string | null;
 };
 
 export async function leggiAffiliati(): Promise<CreatorPieno[] | null> {
@@ -73,7 +89,7 @@ export async function leggiAffiliati(): Promise<CreatorPieno[] | null> {
   try {
     const db = supabaseServizio();
     const PIENE =
-      "id, codice, nome, sconto_percento, commissione_percento, attivo, creato_il, tipo_accordo, bonus_fisso, bonus_fisso_pagato_il, bonus_pagato, seguito, click";
+      "id, codice, nome, sconto_percento, commissione_percento, attivo, creato_il, tipo_accordo, bonus_fisso, bonus_fisso_pagato_il, bonus_pagato, seguito, click, token, ultimo_clic";
     const BASE = "id, codice, nome, sconto_percento, commissione_percento, attivo, creato_il";
 
     let aff: Risp<RigaAff> = await db
@@ -87,7 +103,7 @@ export async function leggiAffiliati(): Promise<CreatorPieno[] | null> {
 
     let commRes: Risp<RigaComm> = await db
       .from("commissioni")
-      .select("affiliato_id, tipo, variante, prezzo_pagato, commissione, pagata_il");
+      .select("affiliato_id, tipo, variante, prezzo_pagato, commissione, pagata_il, creato_il");
     if (commRes.error && /variante|column|schema cache/i.test(commRes.error.message)) {
       commRes = await db
         .from("commissioni")
@@ -96,6 +112,7 @@ export async function leggiAffiliati(): Promise<CreatorPieno[] | null> {
     if (commRes.error) throw new Error(commRes.error.message);
 
     const righeComm = commRes.data ?? [];
+    const adesso = Date.now();
 
     return (aff.data ?? []).map((a) => {
       const sue = righeComm.filter((r) => r.affiliato_id === a.id);
@@ -104,6 +121,7 @@ export async function leggiAffiliati(): Promise<CreatorPieno[] | null> {
       let nFamiglia = 0;
       let baseMaturato = 0;
       let baseDaPagare = 0;
+      let ultimaVendita: string | null = null;
       const saldi = new Map<string, number>();
 
       for (const r of sue) {
@@ -111,6 +129,7 @@ export async function leggiAffiliati(): Promise<CreatorPieno[] | null> {
         baseMaturato += imp;
         if (r.pagata_il === null) baseDaPagare += imp;
         else saldi.set(r.pagata_il, (saldi.get(r.pagata_il) ?? 0) + imp);
+        if (r.creato_il && (!ultimaVendita || r.creato_il > ultimaVendita)) ultimaVendita = r.creato_il;
 
         if (r.tipo === "check") {
           nCheck += 1;
@@ -133,6 +152,13 @@ export async function leggiAffiliati(): Promise<CreatorPieno[] | null> {
       const fissoDaPagare =
         tipoAccordo === "ibrido" && bonusFisso > 0 && !fissoPagatoIl ? bonusFisso : 0;
 
+      const ultimoClic = a.ultimo_clic ?? null;
+      const ultimoMovimento =
+        [ultimoClic, ultimaVendita].filter((x): x is string => Boolean(x)).sort().at(-1) ?? null;
+      const attivoDiRecente = ultimoMovimento
+        ? adesso - Date.parse(ultimoMovimento) < GIORNI_ATTIVO * 24 * 60 * 60 * 1000
+        : false;
+
       const pagamenti = [...saldi.entries()]
         .map(([quando, importo]) => ({ quando, importo: arrotonda(importo) }))
         .sort((x, y) => (x.quando < y.quando ? 1 : -1));
@@ -148,6 +174,10 @@ export async function leggiAffiliati(): Promise<CreatorPieno[] | null> {
         tipo_accordo: tipoAccordo,
         seguito: a.seguito ?? null,
         click: Number(a.click ?? 0),
+        token: a.token ?? null,
+        ultimoClic,
+        ultimoMovimento,
+        attivoDiRecente,
         nCheck,
         nSingola,
         nFamiglia,
@@ -168,4 +198,81 @@ export async function leggiAffiliati(): Promise<CreatorPieno[] | null> {
     console.error("[affiliati] lettura pannello fallita:", e);
     return null;
   }
+}
+
+/* ─────────────────────────── i dati per la dashboard del creator ───────── */
+
+export type Traguardo = {
+  chiave: "singola" | "famiglia" | "check";
+  nome: string;
+  fatte: number;
+  sbloccati: number;
+  dentro: number;
+  segmento: number;
+  mancano: number;
+  premio: number;
+  prossimaSoglia: number;
+};
+
+export type DatiCreator = {
+  nome: string;
+  codice: string;
+  link: string;
+  scontoPercento: number;
+  attivoDiRecente: boolean;
+  ibrido: boolean;
+  clic: number;
+  nCheck: number;
+  nSingola: number;
+  nFamiglia: number;
+  totaleMaturato: number;
+  baseMaturato: number;
+  bonusTotale: number;
+  bonusFisso: number;
+  fissoAttivo: boolean;
+  fissoPagato: boolean;
+  daRicevere: number;
+  giorniPagamento: number;
+  prezzoSingola: number;
+  prezzoFamiglia: number;
+  traguardi: Traguardo[];
+};
+
+/** Trasforma un creator nei dati semplici (senza funzioni) che la dashboard
+    client sa disegnare. Il link glielo passa la rotta (corto se c'è il token). */
+export function datiCreator(c: CreatorPieno, link: string): DatiCreator {
+  const nomi = { singola: "singole", famiglia: "famiglia", check: "check" } as const;
+  const conteggi: Record<"singola" | "famiglia" | "check", number> = {
+    singola: c.nSingola,
+    famiglia: c.nFamiglia,
+    check: c.nCheck,
+  };
+  const traguardi: Traguardo[] = (["singola", "famiglia", "check"] as const).map((k) => {
+    const p = progressoBonus(conteggi[k], BONUS[k]);
+    return { chiave: k, nome: nomi[k], fatte: conteggi[k], ...p };
+  });
+
+  return {
+    nome: c.nome,
+    codice: c.codice,
+    link,
+    scontoPercento: c.sconto_percento,
+    attivoDiRecente: c.attivoDiRecente,
+    ibrido: c.tipo_accordo === "ibrido",
+    clic: c.click,
+    nCheck: c.nCheck,
+    nSingola: c.nSingola,
+    nFamiglia: c.nFamiglia,
+    totaleMaturato: arrotonda(c.baseMaturato + c.bonus.totale + (c.tipo_accordo === "ibrido" ? c.bonusFisso : 0)),
+    baseMaturato: c.baseMaturato,
+    bonusTotale: c.bonus.totale,
+    bonusFisso: c.bonusFisso,
+    fissoAttivo: c.tipo_accordo === "ibrido" && c.bonusFisso > 0,
+    fissoPagato: Boolean(c.fissoPagatoIl),
+    daRicevere: c.daPagareTotale,
+    giorniPagamento: GIORNI_PAGAMENTO,
+    prezzoSingola: PREZZO_SINGOLA,
+    prezzoFamiglia: PREZZO_FAMIGLIA,
+    traguardi,
+  };
 }

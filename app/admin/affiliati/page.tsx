@@ -2,7 +2,7 @@ import { soloAdmin } from "@/lib/admin/guardia";
 import { Avviso, Kpi, euro } from "@/components/admin/Pezzi";
 import { leggiAffiliati } from "@/lib/affiliati/lettura";
 import { leggiCreatori } from "@/lib/affiliati/creatore";
-import { linkCruscottoCreator } from "@/lib/affiliati/accesso";
+import { linkCortoCreator, linkCruscottoCreator } from "@/lib/affiliati/accesso";
 import { casa } from "@/lib/sito";
 import PannelloAffiliati from "@/components/admin/affiliati/PannelloAffiliati";
 
@@ -37,7 +37,7 @@ export default async function PaginaAffiliati() {
 
   const base = casa();
   const links: Record<string, string | null> = {};
-  for (const r of righe) links[r.id] = linkCruscottoCreator(r.codice, base);
+  for (const r of righe) links[r.id] = linkCortoCreator(r.token, base) ?? linkCruscottoCreator(r.codice, base);
 
   /* I creator gratis a vita: lettura a parte (l'email sta nell'auth). Se il
      database non risponde torna null: il pannello lo dice. */

@@ -63,3 +63,11 @@ export function linkCruscottoCreator(codice: string, base: string): string | nul
   const g = gettoneCreator(codice);
   return g ? `${base}/creator/cruscotto?t=${g}` : null;
 }
+
+/** Il link CORTO e privato del creator: rivolio.it/creator/<token>. È quello
+    che si dà davvero (bello, non indovinabile). null se il creator non ha
+    ancora un token. */
+export function linkCortoCreator(token: string | null | undefined, base: string): string | null {
+  if (!token) return null;
+  return `${base}/creator/${token}`;
+}

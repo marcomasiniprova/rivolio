@@ -53,6 +53,35 @@ export function prossimoBonus(n: number, r: RegolaBonus): { mancano: number; pre
   return { mancano: r.passo - dentro, premio: r.premio };
 }
 
+/**
+ * Il progresso verso il prossimo bonus, per la barra da sbloccare.
+ * `sbloccati` = quanti bonus gia' presi; `dentro`/`segmento` = posizione
+ * nella barra corrente; `mancano`/`premio` = quanto resta e cosa si vince.
+ */
+export function progressoBonus(
+  n: number,
+  r: RegolaBonus,
+): {
+  sbloccati: number;
+  prossimaSoglia: number;
+  dentro: number;
+  segmento: number;
+  premio: number;
+  mancano: number;
+} {
+  const sbloccati = n < r.prima ? 0 : 1 + Math.floor((n - r.prima) / r.passo);
+  const p = prossimoBonus(n, r);
+  const segmento = n < r.prima ? r.prima : r.passo;
+  return {
+    sbloccati,
+    prossimaSoglia: n + p.mancano,
+    dentro: segmento - p.mancano,
+    segmento,
+    premio: p.premio,
+    mancano: p.mancano,
+  };
+}
+
 export type Conteggi = { singola: number; famiglia: number; check: number };
 
 /** Tutti i bonus maturati, per stream e in totale. */

@@ -38,3 +38,21 @@ test.describe("I bonus a soglie dei creator", () => {
     expect(bonusiDi({ singola: 10, famiglia: 10, check: 100 }).totale).toBe(20 + 50 + 50);
   });
 });
+
+test.describe("Il progresso verso il prossimo bonus", () => {
+  test("singole: conta gli sbloccati e la posizione nella barra", () => {
+    const { progressoBonus, BONUS } = require("../lib/affiliati/modello");
+    expect(progressoBonus(0, BONUS.singola)).toMatchObject({ sbloccati: 0, mancano: 10, segmento: 10, dentro: 0 });
+    expect(progressoBonus(5, BONUS.singola)).toMatchObject({ sbloccati: 0, mancano: 5, dentro: 5 });
+    expect(progressoBonus(10, BONUS.singola)).toMatchObject({ sbloccati: 1, mancano: 25, segmento: 25, dentro: 0 });
+    expect(progressoBonus(34, BONUS.singola)).toMatchObject({ sbloccati: 1, mancano: 1, dentro: 24 });
+    expect(progressoBonus(35, BONUS.singola)).toMatchObject({ sbloccati: 2 });
+  });
+  test("famiglia e check contano i traguardi tondi", () => {
+    const { progressoBonus, BONUS } = require("../lib/affiliati/modello");
+    expect(progressoBonus(10, BONUS.famiglia).sbloccati).toBe(1);
+    expect(progressoBonus(25, BONUS.famiglia).sbloccati).toBe(2);
+    expect(progressoBonus(100, BONUS.check).sbloccati).toBe(1);
+  });
+});
+
