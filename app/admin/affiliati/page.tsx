@@ -30,6 +30,7 @@ export default async function PaginaAffiliati() {
   }
 
   const attivi = righe.filter((r) => r.attivo).length;
+  const attiviOra = righe.filter((r) => r.attivoDiRecente).length;
   const daPagare = Math.round(righe.reduce((t, r) => t + r.daPagareTotale, 0) * 100) / 100;
   const clic = righe.reduce((t, r) => t + r.click, 0);
   const maturato =
@@ -52,7 +53,11 @@ export default async function PaginaAffiliati() {
           forte
           nota="Base 40% + bonus + fisso."
         />
-        <Kpi etichetta="Creator attivi" valore={String(attivi)} nota={`${righe.length} in tutto`} />
+        <Kpi
+          etichetta="Attivi ora"
+          valore={String(attiviOra)}
+          nota={`${attivi} non sospesi · ${righe.length} in tutto`}
+        />
         <Kpi
           etichetta="Clic sui link"
           valore={clic.toLocaleString("it-IT")}

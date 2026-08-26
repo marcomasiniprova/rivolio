@@ -29,9 +29,16 @@ import type { DatiCreator, Traguardo } from "@/lib/affiliati/lettura";
  * animazioni.
  */
 
-const eur = (n: number) =>
-  `${n.toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
-const intero = (n: number) => Math.round(n).toLocaleString("it-IT");
+// Deterministici apposta: toLocaleString sul server (Node senza ICU) e nel
+// browser possono dare separatori diversi, e l'idratazione si rompe.
+const gruppi = (s: string) => s.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+const eur = (n: number) => {
+  const c = Math.round(Math.abs(n) * 100);
+  return `${n < 0 ? "-" : ""}${gruppi(Math.floor(c / 100).toString())},${(c % 100)
+    .toString()
+    .padStart(2, "0")} €`;
+};
+const intero = (n: number) => gruppi(Math.round(n).toString());
 
 /** Un numero che sale contando, da dove stava al nuovo valore. */
 function useConta(target: number, animato: boolean, durata = 900): number {
