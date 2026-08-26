@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 /* ── Header di sicurezza, su ogni risposta ───────────────────────────────
    Mancavano del tutto (nessun _headers, nessun middleware): la repo era
@@ -37,7 +38,10 @@ const CSP = [
   "font-src 'self' data:",
   "style-src 'self' 'unsafe-inline'",
   `script-src 'self' 'unsafe-inline'${inSviluppo ? " 'unsafe-eval'" : ""}`,
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+  /* ⚠️ sentry.io serve a Sentry per mandare gli errori dal browser (audit
+     26/08): senza, la CSP lo bloccherebbe in silenzio e non arriverebbe
+     niente. Copre tutte le regioni (us/de), incluso l'ingest de.sentry.io. */
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.sentry.io",
   "frame-src 'self'",
 ]
   .join("; ")
@@ -92,4 +96,19 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+/* SENTRY (audit 26/08). `withSentryConfig` aggancia Sentry al build.
+   - org/project: il progetto rivolio-error-handling nella regione Germania
+     (sentryUrl de.sentry.io), da cui viene il DSN.
+   - authToken: le mappe del codice (stack trace leggibili nel browser) si
+     caricano SOLO se questo segreto è presente su Netlify. Se manca, il build
+     NON fallisce: si salta il caricamento, gli errori arrivano lo stesso, solo
+     con le righe del browser compresse. È un di più, non un requisito.
+   Senza token, `withSentryConfig` fa solo l'aggancio a runtime, che è tutto
+   ciò che serve perché gli errori arrivino. */
+export default withSentryConfig(nextConfig, {
+  org: "rivolio",
+  project: "rivolio-error-handling",
+  sentryUrl: "https://de.sentry.io",
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  silent: false,
+});

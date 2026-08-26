@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import * as Sentry from "@sentry/nextjs";
 
 /**
  * L'ULTIMA RETE, quella che prende anche gli errori del layout radice.
@@ -21,6 +22,9 @@ export default function ErroreGlobale({
 }) {
   useEffect(() => {
     console.error("[globale] la pagina si è rotta:", error);
+    /* L'ultima rete prende anche gli errori del layout radice: qui li mandiamo
+       a Sentry (audit 26/08), che altrimenti il global-error non li vede. */
+    Sentry.captureException(error);
   }, [error]);
 
   return (

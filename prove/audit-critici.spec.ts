@@ -128,4 +128,13 @@ test.describe("Gli importanti dell'audit restano chiusi", () => {
     // la migrazione della tabella è nel repo
     expect(leggi("supabase/2026-08-26-modo-sicuro.sql")).toContain("impostazioni");
   });
+
+  test("Sentry: agganciato al server e non murato nel browser dalla CSP", () => {
+    // l'aggancio server c'è
+    expect(leggi("instrumentation.ts")).toContain("onRequestError");
+    // ...e la CSP lascia parlare il browser con Sentry, se no è muto in silenzio
+    expect(leggi("next.config.ts")).toContain("https://*.sentry.io");
+    // il global-error manda l'errore a Sentry
+    expect(leggi("app/global-error.tsx")).toContain("Sentry.captureException");
+  });
 });
