@@ -48,7 +48,7 @@ const OGNI_MS = 20_000;
  * Adesso si rinfrescano da sole SOLO le sezioni dove i numeri si muovono
  * davvero. Sulle altre il bottone "aggiorna" resta, e lo premi tu.
  */
-const SEZIONI_VIVE = ["/admin", "/admin/cruscotto", "/admin/traffico", "/admin/registro"];
+const SEZIONI_VIVE = ["/admin", "/admin/cruscotto", "/admin/crescita", "/admin/registro"];
 
 export default function Guscio({
   email,

@@ -17,8 +17,7 @@ export type ChiaveSezione =
   | "panoramica"
   | "recensioni"
   | "pratiche"
-  | "traffico"
-  | "passaparola"
+  | "crescita"
   | "affiliati"
   | "registro"
   | "iscritti"
@@ -77,25 +76,19 @@ export const SEZIONI: Sezione[] = [
     sotto: "Chi ha pagato e a che punto è. In fondo, il controllo a campione dei verdetti.",
   },
   {
-    chiave: "traffico",
-    href: "/admin/traffico",
-    nome: "Traffico",
-    sotto: "Da dove arrivano le persone e da che paese. Serve a non distribuire alla cieca.",
+    /* Traffico e Passaparola erano due metà della stessa domanda, «come
+       cresce Rivolio»: quanti arrivano e da dove, e quanti ne portano
+       altri. Fuse in una sola sezione (Valerio, 26/08). */
+    chiave: "crescita",
+    href: "/admin/crescita",
+    nome: "Crescita",
+    sotto: "Da dove arriva la gente, e il passaparola che la moltiplica: visite, canali, inviti, recensioni.",
   },
   {
-    /* Accanto a Traffico e Marketing, il terzo pezzo della crescita: su un
-       prodotto una-tantum il passaparola è il motore, non il riacquisto.
-       Quanti invitano, quanti amici arrivano, quante recensioni. Casella
-       TIENITELI dei 4 framework (Valerio, 19/08). */
-    chiave: "passaparola",
-    href: "/admin/passaparola",
-    nome: "Passaparola",
-    sotto: "Il motore di un prodotto una-tantum: inviti mandati, amici arrivati, recensioni.",
-  },
-  {
-    /* Il quarto pezzo della crescita, accanto agli altri: i creator che
-       mandano traffico in cambio di una commissione (40% di default). Qui si creano,
-       si copia il loro link e si vede quanto è maturato e quanto devi. */
+    /* L'altro pezzo della crescita, con la sua sala di controllo: i creator
+       che mandano traffico in cambio di una commissione (40% di default).
+       Qui si creano, si copia il loro link e si vede quanto è maturato e
+       quanto devi. */
     chiave: "affiliati",
     href: "/admin/affiliati",
     nome: "Affiliati",
