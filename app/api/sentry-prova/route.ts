@@ -1,21 +1,26 @@
 import { NextResponse, type NextRequest } from "next/server";
 import * as Sentry from "@sentry/nextjs";
+import { oltreIlLimite, ipDi } from "@/lib/api/limite";
 
 /**
  * ROTTA DI PROVA, TEMPORANEA (audit 26/08). Serve a dimostrare, una volta,
- * che gli errori arrivano davvero nel cruscotto Sentry. Poi si toglie.
+ * che gli errori arrivano davvero nel cruscotto Sentry. Poi si toglie subito.
  *
- * ⚠️ Protetta dal segreto del motore: senza, risponde 401 e non fa niente.
- * Non è un buco: un estraneo non la può usare per spammare Sentry.
+ * ⚠️ Protetta da un gettone fisso (non un segreto vero: la rotta vive pochi
+ * minuti) e da un freno per IP, così nel breve tempo in cui esiste non la si
+ * può usare per spammare Sentry e bruciare la quota gratuita.
  */
 export const dynamic = "force-dynamic";
 
+const GETTONE = "collaudo-sentry-8f3a1c-26ago";
 const MARCATORE = "PROVA-SENTRY-26AGO";
 
 export async function GET(req: NextRequest) {
-  const segreto = new URL(req.url).searchParams.get("segreto");
-  if (!process.env.MOTORE_SEGRETO || segreto !== process.env.MOTORE_SEGRETO) {
+  if (new URL(req.url).searchParams.get("t") !== GETTONE) {
     return NextResponse.json({ errore: "Non autorizzato." }, { status: 401 });
+  }
+  if (oltreIlLimite("sentry-prova", ipDi(req), 5)) {
+    return NextResponse.json({ errore: "Troppe richieste." }, { status: 429 });
   }
 
   const id = Sentry.captureException(
