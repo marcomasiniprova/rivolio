@@ -162,22 +162,6 @@ function stato(): Voce[] {
       ceSta: c(process.env.MOTORE_SEGRETO),
     },
     {
-      nome: "UPSTASH_REDIS_REST_URL",
-      serve:
-        "Il freno anti-abuso condiviso. Senza, il tetto di richieste al minuto vive nella memoria di ogni singola copia della funzione: Netlify ne accende molte insieme e il tetto smette di essere un tetto. È il pezzo che impedisce a un estraneo di farci bruciare i soldi dei dati di volo.",
-      seManca:
-        "Si ripiega sul contatore in memoria, cioè su quello di oggi: ferma un curioso, non chi ci prende di mira. Nessuno resta bloccato per sbaglio.",
-      peso: "importante",
-      ceSta: c(process.env.UPSTASH_REDIS_REST_URL),
-    },
-    {
-      nome: "UPSTASH_REDIS_REST_TOKEN",
-      serve: "La password del freno qui sopra. Servono tutte e due o non si accende.",
-      seManca: "Come sopra: freno in memoria.",
-      peso: "importante",
-      ceSta: c(process.env.UPSTASH_REDIS_REST_TOKEN),
-    },
-    {
       nome: "TETTO_FORNITORE_ORA",
       serve:
         "Quante chiamate al fornitore dei dati di volo si fanno in un'ora, in tutto il sito. È il tetto sulla SPESA, e funziona già adesso senza configurare niente: il conto lo tiene il database. Sopra il tetto i check escono incerti fino all'ora dopo, e ti arriva un TIN.",
