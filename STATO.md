@@ -7,7 +7,24 @@
 > (Polar ha detto no; lo shadow è stato tolto). Lo stato vero e aggiornato
 > sta in `INIZIA-QUI.md`, non nei giri datati.
 
-**Aggiornato:** 2026-08-26 (giro #95: la macchina degli affiliati messa a lucido: migrazione APPLICATA sul database vero (col connettore Supabase), link del creator corto e privato (rivolio.it/creator/<token>, niente più JWT), dashboard del creator gamificata e brandizzata (guadagno che sale contando, traguardi da sbloccare con le barre, refresh dal vivo), pagina admin rifatta come SALA DI CONTROLLO (tabella esercito ordinabile, attività automatica, dettaglio per creator), collaudo end-to-end sul database (clic, commissioni, idempotenza) · giro #94: il pannello admin riordinato (via Redis, Marketing in un documento, Economia ridotta al solo box costi in Panoramica, Verdetti fuso dentro Pratiche) e il CRUSCOTTO AFFILIATI completo: vista admin per creator (40% + bonus a soglie + fisso ibrido, clic, storico saldi, segna pagato) e vista creator col link privato firmato, senza account · giro #93: SIAMO LIVE su Stripe Managed Payments, il checkout acceso e verificato sull'account vero · giro #92: la pulizia del repo a Stripe, e il "controlla la mail" che compariva anche da loggato · giro #91: POLAR E CASSA FINTA ESTINTI, lo
+**Aggiornato:** 2026-08-26 (giro #96: IL PANNELLO RIFINITO E BLINDATO. Cinque
+sezioni rifatte per Valerio («il mio pannello di controllo è dove vivrò»):
+Pratiche come lista chiara «di chi è la palla» (via il bollino grezzo «4»,
+dentro i filtri Da mandare/In attesa/Vinte/Chiuse coi numeri veri dal
+database); Traffico e Passaparola fusi in **Crescita** (un posto solo per
+«come cresce Rivolio»); Iscritti come lista filtrabile con la barra della
+salute (quanti hanno confermato); Impostazioni senza il blocco «Quando arriva
+il dominio»; **la mappa col fullscreen che non crasha più** (era un link a una
+pagina dentro il guscio del pannello: adesso un velo a tutto schermo nella
+stessa scheda, esci con Esc) e aggiornata (la cassa è Stripe, nodo «I
+creator»). Più l'AUDIT del codice (13 revisori + ricerca su 15 SaaS) coi SEI
+CRITICI chiusi e verificati: escalation ad admin via RLS colonna ruolo
+(migrazione applicata sul DB vero), commissioni creator sottostimate oltre le
+1000 righe, open redirect dopo il login, mail bombing su iscriviti/verifica,
+cron follow-up che falliva aperto (invio doppio di massa), webhook Stripe
+concorrenti (doppio benvenuto e doppio incasso). La pulizia dei dati di test è
+pronta ma IN ATTESA del «vai» (rischia di toccare le poche visite reali:
+google, ig, bing). · giro #95: la macchina degli affiliati messa a lucido: migrazione APPLICATA sul database vero (col connettore Supabase), link del creator corto e privato (rivolio.it/creator/<token>, niente più JWT), dashboard del creator gamificata e brandizzata (guadagno che sale contando, traguardi da sbloccare con le barre, refresh dal vivo), pagina admin rifatta come SALA DI CONTROLLO (tabella esercito ordinabile, attività automatica, dettaglio per creator), collaudo end-to-end sul database (clic, commissioni, idempotenza) · giro #94: il pannello admin riordinato (via Redis, Marketing in un documento, Economia ridotta al solo box costi in Panoramica, Verdetti fuso dentro Pratiche) e il CRUSCOTTO AFFILIATI completo: vista admin per creator (40% + bonus a soglie + fisso ibrido, clic, storico saldi, segna pagato) e vista creator col link privato firmato, senza account · giro #93: SIAMO LIVE su Stripe Managed Payments, il checkout acceso e verificato sull'account vero · giro #92: la pulizia del repo a Stripe, e il "controlla la mail" che compariva anche da loggato · giro #91: POLAR E CASSA FINTA ESTINTI, lo
 scanner fantasma chiuso, il creator col bottone «gratis», e i margini rifatti
 su Stripe. Lo scanner fantasma sparito dalla pagina del verdetto; Polar e la
 cassa di prova tolti da ogni file (rotte, componenti, colonna DB rinominata);
