@@ -3,6 +3,7 @@ import { salvaIscritto } from "@/lib/archivio";
 import { controllaIndirizzo } from "@/lib/email/dominio";
 import { chiediConferma } from "@/lib/email/messaggi";
 import { traccia } from "@/lib/eventi/registra";
+import { ipDi, oltreIlLimite } from "@/lib/api/limite";
 
 /* Stesso controllo del resto del sito (lib/email/indirizzo.ts). Qui il
    guadagno è diverso ma reale: un indirizzo morto in lista è una email
@@ -10,6 +11,20 @@ import { traccia } from "@/lib/eventi/registra";
    TUTTI gli altri iscritti. */
 
 export async function POST(req: Request) {
+  /* 🔴 IL FRENO MANCAVA, ed era l'unica rotta di INVIO email senza tetto.
+     Ogni chiamata manda una email di conferma via Resend a qualsiasi
+     indirizzo ben formato: 100 POST al minuto verso la stessa vittima
+     sono 100 email e altrettanti reclami, che bruciano la reputazione del
+     dominio da cui parte ANCHE il link di accesso alla pratica pagata.
+     Cinque al minuto per IP: una persona si iscrive una volta.
+     Trovato dall'audit del pannello (26/08). */
+  if (oltreIlLimite("iscriviti", ipDi(req), 5)) {
+    return NextResponse.json(
+      { errore: "Hai riprovato troppe volte. Aspetta un minuto." },
+      { status: 429 },
+    );
+  }
+
   let corpo: unknown;
   try {
     corpo = await req.json();

@@ -143,6 +143,20 @@ export async function evadiPagamentoPratica(
     }
     pratica = creata.pratica;
 
+    /* 🔴 RACE DEI WEBHOOK, il pezzo che mancava. `creaPratica` promette da
+       giorni «il webhook che ha perso la corsa NON manda una seconda
+       email», ma la guardia non era cablata QUI: `giaEsisteva` si
+       calcolava e si buttava. Due consegne dello stesso pagamento in
+       parallelo passavano entrambe, e chi perdeva mandava un SECONDO
+       benvenuto T+0, un secondo TIN dei soldi e un secondo evento
+       "pagato" che raddoppiava l'incasso nel cruscotto. Se questa
+       consegna ha perso (23505 sull'indice unico), la pratica l'ha già
+       fatta l'altra, che sta anche facendo il resto: ci si ferma qui.
+       Trovato dall'audit del pannello (26/08). */
+    if (creata.giaEsisteva) {
+      return { http: 200, body: { ok: true, pratica: pratica.id, nota: "Già gestito (corsa persa)." } };
+    }
+
     /* #21: la firma della rinuncia al recesso entra nella cronologia. Il
        checkout la esige, quindi se qui manca è un'anomalia: si logga forte
        e si segna, per l'admin. */

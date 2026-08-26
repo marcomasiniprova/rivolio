@@ -84,6 +84,51 @@ type RigaComm = {
   creato_il?: string | null;
 };
 
+/**
+ * TUTTE le righe di `commissioni`, lette a pagine.
+ *
+ * 🔴 Prima si leggevano con una `select` senza limite. PostgREST taglia in
+ * SILENZIO a 1000 righe: superato quel numero, `baseMaturato` e
+ * `baseDaPagare` uscivano SOTTOSTIMATI e ai creator si pagava MENO del
+ * dovuto, senza nessun errore. È l'invariante che non si può rompere: mai
+ * perdere una commissione dovuta. Qui si legge a pagine finché finiscono,
+ * ordinando per `riferimento` (UNICO) così nessuna riga viene saltata sul
+ * confine di una pagina. Il tetto è altissimo e, se mai lo si toccasse, si
+ * fa sentire nei log invece di tagliare zitto.
+ * Trovato dall'audit del pannello (26/08).
+ */
+async function tutteLeCommissioni(db: ReturnType<typeof supabaseServizio>): Promise<RigaComm[]> {
+  const PAGINA = 1000;
+  const TETTO = 500_000; // 500 pagine: irraggiungibile in pratica, non un cap muto
+  let colonne = "affiliato_id, tipo, variante, prezzo_pagato, commissione, pagata_il, creato_il";
+  const righe: RigaComm[] = [];
+  for (let da = 0; da < TETTO; da += PAGINA) {
+    let r: Risp<RigaComm> = await db
+      .from("commissioni")
+      .select(colonne)
+      .order("riferimento", { ascending: true })
+      .range(da, da + PAGINA - 1)
+      .returns<RigaComm[]>();
+    /* Migrazione della variante non applicata: si rilegge senza, da qui in
+       avanti, così non si ritenta a ogni pagina. */
+    if (r.error && /variante|column|schema cache/i.test(r.error.message) && colonne.includes("variante")) {
+      colonne = "affiliato_id, tipo, prezzo_pagato, commissione, pagata_il";
+      r = await db
+        .from("commissioni")
+        .select(colonne)
+        .order("riferimento", { ascending: true })
+        .range(da, da + PAGINA - 1)
+        .returns<RigaComm[]>();
+    }
+    if (r.error) throw new Error(r.error.message);
+    const pezzo = r.data ?? [];
+    righe.push(...pezzo);
+    if (pezzo.length < PAGINA) return righe; // ultima pagina
+  }
+  console.warn("[affiliati] tetto di lettura commissioni raggiunto: i totali potrebbero essere parziali.");
+  return righe;
+}
+
 export async function leggiAffiliati(): Promise<CreatorPieno[] | null> {
   if (!SERVIZIO_ATTIVO) return null;
   try {
@@ -101,17 +146,9 @@ export async function leggiAffiliati(): Promise<CreatorPieno[] | null> {
     }
     if (aff.error) throw new Error(aff.error.message);
 
-    let commRes: Risp<RigaComm> = await db
-      .from("commissioni")
-      .select("affiliato_id, tipo, variante, prezzo_pagato, commissione, pagata_il, creato_il");
-    if (commRes.error && /variante|column|schema cache/i.test(commRes.error.message)) {
-      commRes = await db
-        .from("commissioni")
-        .select("affiliato_id, tipo, prezzo_pagato, commissione, pagata_il");
-    }
-    if (commRes.error) throw new Error(commRes.error.message);
-
-    const righeComm = commRes.data ?? [];
+    /* Tutte le commissioni, paginate: la lettura non tronca più a 1000 in
+       silenzio (vedi tutteLeCommissioni). */
+    const righeComm = await tutteLeCommissioni(db);
     const adesso = Date.now();
 
     return (aff.data ?? []).map((a) => {

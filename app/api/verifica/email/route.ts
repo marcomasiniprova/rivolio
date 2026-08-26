@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { ipDi, oltreIlLimite } from "@/lib/api/limite";
 import { controllaIndirizzo } from "@/lib/email/dominio";
 import { SERVIZIO_ATTIVO, supabaseServizio } from "@/lib/supabase/servizio";
 import { POSTA_ATTIVA } from "@/lib/email/posta";
@@ -87,6 +88,17 @@ async function inviaVerdetto(
 }
 
 export async function POST(req: Request) {
+  /* Il freno: ogni chiamata fa una risoluzione DNS (fino a 2,5s) e può
+     far partire l'email del verdetto. Senza tetto, un ciclo la martella.
+     Dieci al minuto per IP: chi ha appena fatto il check lascia un
+     indirizzo una volta. Trovato dall'audit del pannello (26/08). */
+  if (oltreIlLimite("verifica-email", ipDi(req), 10)) {
+    return NextResponse.json(
+      { ok: false, errore: "Hai riprovato troppe volte. Aspetta un minuto." },
+      { status: 429 },
+    );
+  }
+
   let corpo: unknown;
   try {
     corpo = await req.json();

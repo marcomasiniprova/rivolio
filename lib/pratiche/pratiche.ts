@@ -422,11 +422,20 @@ export async function praticheDaSeguire(limite = 100): Promise<PraticaConVolo[]>
  * Gli eventi già registrati per un gruppo di pratiche, come insieme di
  * chiavi `praticaId:tipo`. È la memoria del cron: prima di mandare
  * un'email si controlla qui, così nessuna parte due volte.
+ *
+ * 🔴 TORNA `null` SE LA LETTURA FALLISCE, non un insieme vuoto. È la
+ * differenza fra «non è mai partita nessuna email» e «non sono riuscito a
+ * leggere cosa è partito», e su un cron che manda posta è tutta la
+ * differenza del mondo: un insieme vuoto per errore fa credere al giro che
+ * nessuno abbia mai ricevuto niente, e per OGNI pratica aperta rimanda
+ * benvenuto, sollecito, ente ed esito. Con centinaia di pratiche è un
+ * invio doppio di massa che manda il dominio in blocklist. Chi chiama
+ * DEVE fermarsi su `null`. Trovato dall'audit del pannello (26/08).
  */
 export async function eventiRegistrati(
   praticaIds: string[],
   prefisso = "email_",
-): Promise<Set<string>> {
+): Promise<Set<string> | null> {
   const insieme = new Set<string>();
   if (!SERVIZIO_ATTIVO || praticaIds.length === 0) return insieme;
   try {
@@ -438,12 +447,12 @@ export async function eventiRegistrati(
       .like("tipo", `${prefisso}%`);
     if (error) {
       console.error("[pratiche] eventi registrati non letti:", error.message);
-      return insieme;
+      return null;
     }
     for (const e of data ?? []) insieme.add(`${e.pratica_id}:${e.tipo}`);
     return insieme;
   } catch (e) {
     console.error("[pratiche] eventi registrati non letti:", e);
-    return insieme;
+    return null;
   }
 }

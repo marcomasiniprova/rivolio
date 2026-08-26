@@ -256,6 +256,18 @@ async function giroSegui({ budgetMs = 8000 } = {}) {
   const pratiche = await praticheDaSeguire();
   const ids = pratiche.map((p) => p.id);
   const fatti = await eventiRegistrati(ids);
+  /* 🔴 SI FALLISCE CHIUSO. Se la memoria degli eventi non si è letta
+     (`null`, non «vuota»), non si sa cosa è già partito: proseguire
+     rimanderebbe benvenuto, sollecito, ente ed esito a OGNI pratica
+     aperta, cioè un invio doppio di massa che brucia il dominio. Un giro
+     saltato non costa niente: il prossimo cron riprova. Trovato dall'audit
+     del pannello (26/08). */
+  if (fatti === null) {
+    return {
+      ok: false as const,
+      motivo: "Memoria degli eventi non letta: giro annullato per non rimandare email doppie.",
+    };
+  }
   /* La query dei no aperti costa una lettura in più: la facciamo solo se il
      recupero è acceso (con la cassa). Spento = mappa vuota, non parte nulla. */
   const statoMap = RECUPERO_ATTIVO ? await statoRepliche(ids) : new Map<string, StatoReplica>();
