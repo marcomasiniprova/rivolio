@@ -4,6 +4,7 @@ import { stripe, stripeAttivo } from "@/lib/stripe";
 import { evadiPagamentoPratica } from "@/lib/pratiche/evasione";
 import type { TipoPratica } from "@/lib/pratiche/pratiche";
 import { registraCommissione } from "@/lib/affiliati/commissioni";
+import { analisiPagataPronta } from "@/lib/email/check-pronto";
 
 /**
  * Il webhook di Stripe: qui un pagamento diventa una pratica.
@@ -89,6 +90,20 @@ export async function POST(req: NextRequest) {
         prezzoPagato: prezzo ?? 0,
         riferimento: sessione.id,
       });
+    }
+    /* 🔴 LA RETE DI SICUREZZA (audit 26/08): il pass lo scrive solo il
+       rientro dalla cassa (/api/check/pronto). Se il browser non torna
+       (scheda chiusa, pagato da un telefono e riaperto altrove), l'analisi
+       è pagata e non consegnata. Qui si manda l'email col link che la
+       riapre, da qualsiasi dispositivo. Si aspetta l'invio (la funzione
+       Netlify si congela alla risposta), ma non si fallisce se non parte:
+       il pass si riemette comunque tornando dalla cassa. */
+    if (email) {
+      try {
+        await analisiPagataPronta(email, sessione.id);
+      } catch (e) {
+        console.error("[stripe] email 'analisi pronta' non spedita:", e);
+      }
     }
     return NextResponse.json({ ok: true, prodotto: "check" });
   }
