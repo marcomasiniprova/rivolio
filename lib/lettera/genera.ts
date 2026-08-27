@@ -283,6 +283,8 @@ IBAN: [qui il tuo IBAN]
 
 Chiedo il pagamento, o una risposta scritta e motivata, entro 30 giorni dal ricevimento della presente. Se intendete invocare circostanze eccezionali, chiedo che siano indicate in modo specifico e documentate: l'onere della prova è a vostro carico, e l'esonero richiede anche la dimostrazione di aver adottato tutte le misure ragionevoli, ivi compresa la riprotezione su voli alternativi, anche operati da altri vettori.
 
+La presente vale quale formale costituzione in mora ai sensi dell'articolo 1219 del codice civile. In mancanza di pagamento entro il termine indicato, sulla somma dovuta decorreranno gli interessi legali ai sensi dell'articolo 1224 del codice civile dalla data della presente.
+
 In mancanza di riscontro nel termine indicato, presenterò reclamo a ${organismoDiPartenza(fatto)}, l'organismo nazionale responsabile dell'applicazione del Regolamento (CE) 261/2004 per lo Stato di partenza, e valuterò ogni ulteriore tutela nelle sedi competenti.
 
 In allegato: carta d'imbarco, documento d'identità e le eventuali ricevute delle spese sostenute.
@@ -353,7 +355,7 @@ in data ${giornoInvio} vi ho inviato una richiesta di compensazione pecuniaria a
 
 ${scheda.replica}${paragrafoSuMisura ? `\n\n${paragrafoSuMisura.trim()}` : ""}
 
-Vi chiedo il pagamento, o una risposta scritta e motivata, entro 14 giorni dal ricevimento della presente.
+Vi chiedo il pagamento, o una risposta scritta e motivata, entro 14 giorni dal ricevimento della presente. Resta ferma la costituzione in mora già intervenuta con il primo reclamo: sulla somma dovuta decorrono gli interessi legali ai sensi dell'articolo 1224 del codice civile.
 
 Decorso inutilmente questo termine, presenterò reclamo a ${organismoDiPartenza(fatto)}, l'organismo nazionale responsabile dell'applicazione del Regolamento (CE) 261/2004 per lo Stato di partenza, che può accertare la violazione e applicare le sanzioni previste. Valuterò inoltre ogni ulteriore tutela nelle sedi competenti.
 
