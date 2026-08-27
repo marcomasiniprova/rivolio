@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { CORS, ipDi, oltreIlLimiteCondiviso } from "@/lib/api/limite";
 import { utenteDaRichiesta } from "@/lib/api/utente";
 import { analizzaRifiuto, coerenzaRisposta } from "@/lib/ai/replica";
+import { righeMeteoVolo } from "@/lib/meteo/openmeteo";
 import {
   EVENTO_ANALISI_RIFIUTO,
   EVENTO_RIFIUTO_DOCUMENTO,
@@ -172,7 +173,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     ? await sb
         .from("voli")
         .select(
-          "volo_iata, data_locale, vettore_operativo, km_ortodromica, fonte, arrivo_previsto_utc, arrivo_effettivo_utc",
+          "volo_iata, data_locale, vettore_operativo, km_ortodromica, fonte, payload_grezzo, arrivo_previsto_utc, arrivo_effettivo_utc",
         )
         .eq("id", pratica.volo_id)
         .maybeSingle()
@@ -214,7 +215,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   }
 
   /* ------------------------------------------------ 3 e 4. l'analisi */
-  const analisi = await analizzaRifiuto(dossier, rispostaLoro);
+  /* IL METEO VERIFICATO ai due estremi del volo, se il modulo è acceso.
+     Entra nell'analisi: se la compagnia dà la colpa al maltempo, l'AI
+     risponde coi numeri reali di quel giorno. Torna null senza fare danni
+     se spento o non letto: la lettera non muore mai per il meteo. */
+  const v = volo as { payload_grezzo?: unknown; arrivo_effettivo_utc?: string | null } | null;
+  const meteo = await righeMeteoVolo(v?.payload_grezzo, v?.arrivo_effettivo_utc ?? null);
+  const analisi = await analizzaRifiuto(dossier, rispostaLoro, meteo);
   if (!analisi) {
     /* Niente modello, o modello che non ha capito. Il testo della loro
        risposta si salva lo stesso: è materiale del fascicolo e serve

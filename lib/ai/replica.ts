@@ -346,6 +346,8 @@ ${fontiAmmesse().map((f) => `   - ${f}`).join("\n")}
 7. Da 120 a 300 parole. Tono fermo, professionale, senza aggettivi.
 8. Non usare mai il trattino lungo. Usa punti e virgole.
 
+USO DEL METEO. Se nel fascicolo c'è una sezione "METEO VERIFICATO" con i dati reali e la compagnia dà la colpa al maltempo, servitene nel paragrafo: cita le condizioni reali (precipitazioni, neve, raffiche, nubi basse) all'orario del volo. Se erano normali, dillo chiaramente: è la prova che la scusa non regge. Se invece confermano il maltempo, non insistere su di esse; ricorda che spetta comunque al vettore provare il nesso con QUESTO volo e le misure adottate. I numeri del meteo (mm, km/h, gradi, percentuali) NON sono importi in euro: puoi e devi citarli.
+
 Se la risposta della compagnia non si capisce, metti "sicurezza": "bassa" e "paragrafo": "".`;
 
 type RispostaModello = {
@@ -374,6 +376,10 @@ function stringhe(v: unknown, max: number): string[] {
 export async function analizzaRifiuto(
   dossier: Dossier,
   rispostaCompagnia: string,
+  /* Il meteo verificato ai due estremi del volo (lib/meteo meteoDelVolo),
+     già pronto in prosa. Null = niente meteo (modulo spento o non letto):
+     l'analisi procede identica, senza la sezione. */
+  meteo: string | null = null,
 ): Promise<AnalisiRifiuto | null> {
   /* 🔴 MODO SICURO: con l'interruttore d'emergenza acceso l'AI non scrive.
      Si torna al testo fisso verificato (chi chiama, davanti a null, usa la
@@ -385,7 +391,7 @@ export async function analizzaRifiuto(
   const testo = rispostaCompagnia.trim();
   if (testo.length < 20) return null;
 
-  const utente = `# Il fascicolo del caso\n${dossierInParole(dossier)}\n\n# La risposta della compagnia, parola per parola\n"""\n${testo.slice(0, 12000)}\n"""`;
+  const utente = `# Il fascicolo del caso\n${dossierInParole(dossier)}${meteo ? `\n\n# METEO VERIFICATO (dato reale, archivio ufficiale)\n${meteo}` : ""}\n\n# La risposta della compagnia, parola per parola\n"""\n${testo.slice(0, 12000)}\n"""`;
 
   const contenuto = await leggiRispostaColModello(ISTRUZIONI, utente);
   if (!contenuto) return null;
