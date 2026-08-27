@@ -30,8 +30,18 @@
  * variabile d'ambiente invece la scrive Netlify e non la tocca nessuno.
  */
 
+import { AMBIENTE_PROVA } from "@/lib/ambiente";
+
 /** L'indirizzo pubblico del sito, senza la barra finale. */
 export function casa(): string {
+  /* 🔴 IL GEMELLO PUNTA A SÉ STESSO (27/08). Su staging l'indirizzo di casa
+     è quello del gemello (DEPLOY_PRIME_URL, che Netlify dà al ramo), NON il
+     dominio vero: se no i rimandi della cassa e i link finirebbero su
+     rivolio.it, portandosi dietro i cookie del sito vero. In produzione
+     AMBIENTE_PROVA è falso e vale la regola di sempre (dominio principale). */
+  if (AMBIENTE_PROVA && process.env.DEPLOY_PRIME_URL) {
+    return process.env.DEPLOY_PRIME_URL.replace(/\/$/, "");
+  }
   return (
     process.env.NEXT_PUBLIC_SITO ??
     /* Netlify la mette da solo, ed e' il dominio PRINCIPALE del progetto:

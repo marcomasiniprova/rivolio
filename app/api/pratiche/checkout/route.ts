@@ -3,7 +3,7 @@ import { casa, versoCasa } from "@/lib/sito";
 import { passDi } from "@/lib/check/cancello";
 import { CHECK_A_PAGAMENTO, prezzoPagatoPerIlCheck } from "@/lib/check/ingresso";
 import { COOKIE_PREZZO, TEST_DUE_PREZZI, listinoDi, varianteValida } from "@/lib/prezzi";
-import { creaSessioneCheckout, stripeAttivo } from "@/lib/stripe";
+import { cassaVeraVietata, creaSessioneCheckout, stripeAttivo } from "@/lib/stripe";
 import { affiliatoDaCodice } from "@/lib/affiliati/affiliati";
 import { COOKIE_REF } from "@/lib/affiliati/codice";
 import { utenteCreatore } from "@/lib/affiliati/creatore";
@@ -138,7 +138,8 @@ export async function GET(req: NextRequest) {
        linea), quindi non ci sono prodotti da creare a mano nel pannello.
        Se la chiave Stripe manca (una misconfig su Netlify), non si vende:
        meglio un onesto "non attivo" che un vicolo cieco o una cassa finta. */
-    if (!stripeAttivo()) return paginaRisultato("non-attivo");
+    /* Stripe assente, oppure gemello con chiavi live: non si incassa. */
+    if (!stripeAttivo() || cassaVeraVietata()) return paginaRisultato("non-attivo");
 
     /* I due sconti, calcolati come sulla pagina del risultato (stessa
        funzione, stessi ingredienti: il prezzo del bottone e quello della

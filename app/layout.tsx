@@ -10,6 +10,7 @@ import "./globals.css";
 
 import { PREZZO_LANCIO, seSiPaga } from "@/lib/check/ingresso";
 import { euro } from "@/lib/prezzi";
+import { AMBIENTE_PROVA } from "@/lib/ambiente";
 // Geist per i titoli, Poppins per il testo.
 const geist = Geist({ variable: "--font-geist", subsets: ["latin"], display: "swap" });
 const poppins = Poppins({
@@ -106,6 +107,29 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geist.variable} ${poppins.variable} ${serif.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-nebbia text-inchiostro">
+        {/* IL CARTELLO DEL GEMELLO (27/08): compare SOLO sull'ambiente di
+            prova, mai sul sito vero, così non si confonde una copia con la
+            produzione. Stili in linea per non dipendere da nient'altro. */}
+        {AMBIENTE_PROVA && (
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              zIndex: 9999,
+              background: "#b45309",
+              color: "#fff",
+              textAlign: "center",
+              fontSize: "12px",
+              fontWeight: 600,
+              letterSpacing: "0.02em",
+              padding: "4px 8px",
+            }}
+          >
+            AMBIENTE DI PROVA · questo è il gemello, non il sito vero
+          </div>
+        )}
         <script
           type="application/ld+json"
           /* Il "<" si scrive escapato: un dato che contenesse "</script>"

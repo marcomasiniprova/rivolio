@@ -1,5 +1,6 @@
 import Stripe from "stripe";
 import { tinGuasto } from "@/lib/eventi/telegram";
+import { AMBIENTE_PROVA } from "@/lib/ambiente";
 
 /**
  * Stripe, il gateway di pagamento vero: la cassa di Rivolio.
@@ -39,6 +40,17 @@ export function modalitaStripe(): "test" | "live" | "assente" {
   if (k.startsWith("sk_live_")) return "live";
   if (k.startsWith("sk_test_")) return "test";
   return "assente";
+}
+
+/**
+ * 🔴 IL GEMELLO NON INCASSA MAI DAVVERO (27/08). Su staging, se le chiavi
+ * sono quelle LIVE (ereditate dal sito vero), la cassa NON si apre: un test
+ * non deve poter addebitare una carta vera. Con chiavi di TEST invece va
+ * bene (carte finte). In produzione AMBIENTE_PROVA è falso, quindi non
+ * blocca mai niente.
+ */
+export function cassaVeraVietata(): boolean {
+  return AMBIENTE_PROVA && modalitaStripe() === "live";
 }
 
 /**

@@ -3,7 +3,7 @@ import { casa } from "@/lib/sito";
 import { CHECK_A_PAGAMENTO, prezzoCheck } from "@/lib/check/ingresso";
 import { passUsabile } from "@/lib/check/cancello";
 import { conteggioCheck } from "@/lib/check/conteggio";
-import { creaSessioneCheckout, stripeAttivo } from "@/lib/stripe";
+import { cassaVeraVietata, creaSessioneCheckout, stripeAttivo } from "@/lib/stripe";
 import { affiliatoDaCodice } from "@/lib/affiliati/affiliati";
 import { COOKIE_REF } from "@/lib/affiliati/codice";
 import { ipDi, oltreIlLimiteCondiviso } from "@/lib/api/limite";
@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
 
   const origine = origineDa(new URL(req.url).searchParams.get("origine"));
 
-  if (stripeAttivo()) {
+  if (stripeAttivo() && !cassaVeraVietata()) {
     const { pagati } = await conteggioCheck();
     const prezzo = prezzoCheck(pagati).prezzo;
     const affiliato = await affiliatoDaCodice(req.cookies.get(COOKIE_REF)?.value);

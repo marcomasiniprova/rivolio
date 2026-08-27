@@ -25,6 +25,7 @@ import { aerodatabox } from "./fornitori/aerodatabox";
 import { aviationstack } from "./fornitori/aviationstack";
 import { aviationedge } from "./fornitori/aviationedge";
 import { demo, voloDimostrativo } from "./fornitori/demo";
+import { AMBIENTE_PROVA } from "@/lib/ambiente";
 import { incrociaFonti } from "./incrocio";
 import { classificaSciopero } from "@/lib/scioperi/scioperi";
 import { dopo } from "@/lib/eventi/registra";
@@ -147,6 +148,11 @@ const COLONNE_CACHE = `${COLONNE_CACHE_BASE}, partenza_paese, arrivo_paese, part
  */
 function fornitoreAttivo(voloIata: string): FornitoreVoli {
   if (voloIata.toUpperCase().startsWith("ZZ")) return demo;
+  /* 🔴 IL GEMELLO NON CHIAMA MAI IL FORNITORE VERO (27/08): costerebbe soldi
+     e scriverebbe dati veri nel database che condivide col sito vero. Su
+     staging tutto passa dalla demo. In produzione AMBIENTE_PROVA è falso e
+     non cambia niente. */
+  if (AMBIENTE_PROVA) return demo;
   return process.env.AERODATABOX_API_KEY ? aerodatabox : demo;
 }
 

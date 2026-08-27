@@ -1,6 +1,7 @@
 import { after } from "next/server";
 import { colonnaMancante } from "@/lib/supabase/colonne";
 import { SERVIZIO_ATTIVO, supabaseServizio } from "@/lib/supabase/servizio";
+import { AMBIENTE_PROVA } from "@/lib/ambiente";
 
 /**
  * IL REGISTRO DI QUELLO CHE SUCCEDE (richiesta di Valerio, 11/08).
@@ -211,6 +212,11 @@ export async function registra(e: Evento): Promise<void> {
  * verso il database per ogni singolo check.
  */
 export async function registraMolti(eventi: Evento[]): Promise<void> {
+  /* 🔴 IL GEMELLO NON SPORCA I NUMERI DEL SITO VERO (27/08): le sue visite e
+     i suoi check di prova non entrano nel registro condiviso, se no il
+     pannello di produzione conterebbe il traffico di quando provo io. In
+     produzione AMBIENTE_PROVA è falso e si registra tutto come sempre. */
+  if (AMBIENTE_PROVA) return;
   if (!SERVIZIO_ATTIVO || eventi.length === 0) return;
   try {
     const { error } = await supabaseServizio()
