@@ -77,13 +77,43 @@ test.describe("Le fasce dell'art. 7, su ogni porta", () => {
   });
 
   test("COINCIDENZA PERSA dentro l'Unione, arrivo fra 3 e 4 ore: 400, non 300", () => {
+    /* Milano → Parigi → Riunione: la destinazione finale (RUN) è territorio
+       francese, quindi UE. Su un viaggio intra-UE più lungo di 3.500 km la
+       fascia è 400 piena, e la riduzione dell'art. 7 par. 2 (che vale solo
+       sulla fascia da 600) non si applica. */
     const v = valutaCoincidenza(
       base({ partenzaIata: "MXP", partenzaPaese: "IT", arrivoIata: "CDG", arrivoPaese: "FR", kmOrtodromica: 640 }),
-      { stessaPrenotazione: "si", ritardoFinale: "fra3e4", destinazioneFinale: "RUN" } as never,
+      { unica: "si", ritardoFinale: "fra3e4" } as never,
       8774,
+      "RUN",
     );
     expect(v.esito).toBe("idoneo");
     if (v.esito === "idoneo") expect(v.importo).toBe(400);
+  });
+
+  test("COINCIDENZA verso un paese terzo oltre 3500 km: 600 (oltre 4h) e 300 (3-4h), mai 400", () => {
+    /* Milano → Parigi → New York, unica prenotazione: la destinazione finale
+       è un paese terzo, quindi il tetto dei 400 dell'art. 7.2 lett. b) NON
+       vale. La fascia è quella del percorso a due tratte: 600, ridotta a 300
+       se l'arrivo finale è fra 3 e 4 ore.
+       ⚠️ Il percorso "destinazione dichiarata" (usato dall'app) prima
+       guardava il PRIMO volo, tutto dentro l'Unione, e usciva 400: su un
+       3-4 ore è più del dovuto (300), cioè un falso positivo sull'importo.
+       Questa prova lo vieta per sempre e tiene i due percorsi allineati. */
+    const primo = base({
+      partenzaIata: "MXP",
+      partenzaPaese: "IT",
+      arrivoIata: "CDG",
+      arrivoPaese: "FR",
+      kmOrtodromica: 640,
+    });
+    const oltre4 = valutaCoincidenza(primo, { unica: "si", ritardoFinale: "oltre4" } as never, 6479, "JFK");
+    expect(oltre4.esito).toBe("idoneo");
+    if (oltre4.esito === "idoneo") expect(oltre4.importo).toBe(600);
+
+    const fra3e4 = valutaCoincidenza(primo, { unica: "si", ritardoFinale: "fra3e4" } as never, 6479, "JFK");
+    expect(fra3e4.esito).toBe("idoneo");
+    if (fra3e4.esito === "idoneo") expect(fra3e4.importo).toBe(300);
   });
 
   test("fuori dall'Europa non si vende nemmeno dichiarando un negato imbarco", () => {

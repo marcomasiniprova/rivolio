@@ -183,6 +183,7 @@ export function valutaCoincidenza(
   f: FattoVolo,
   r: RisposteCoincidenza,
   kmViaggio: number | null,
+  destinazioneIata: string | null,
 ): Verdetto {
   if (r.unica === "no") {
     return nonIdoneo(
@@ -209,14 +210,20 @@ export function valutaCoincidenza(
   if (blocco) return blocco;
   const km = kmViaggio as number;
 
-  /* Le fasce sull'intero viaggio, con la riduzione del lungo raggio:
-     oltre 3.500 km e arrivo fra 3 e 4 ore → 300€ (art. 7.2). */
-  /* ⚠️ La riduzione dell'art. 7 par. 2 vale SOLO sulla fascia da 600.
-     Prima, su un viaggio tutto dentro l'Unione più lungo di 3.500 km,
-     con arrivo fra 3 e 4 ore uscivano 300€: ma lì la fascia giusta è 400
-     piena, e dimezzare una fascia già tenuta bassa dalla lettera b)
-     vuol dire applicare due volte lo stesso sconto. */
-  const importo = fasciaArt7(km, dentroLoSpazioEuropeo(f), r.ritardoFinale === "fra3e4");
+  /* LA FASCIA SUL VIAGGIO INTERO. Il tetto di 400 dell'art. 7 par. 2 lett. b)
+     cade solo se la DESTINAZIONE FINALE è un paese terzo certo: lì spettano
+     600, o 300 con la riduzione del lungo raggio (arrivo fra 3 e 4 ore).
+     ⚠️ Va guardata la destinazione, NON il primo volo: prima qui c'era
+     `dentroLoSpazioEuropeo(f)`, che guardava lo scalo di PARTENZA (spesso
+     tutto dentro l'Unione) e teneva a 400 anche un Milano → Francoforte →
+     New York, dove spettano 600, e su un 3-4 ore chiedeva 400 dove il
+     dovuto è 300 (un falso positivo sull'importo). È lo stesso criterio del
+     percorso a due tratte. Su un dato incerto (o sulla Svizzera, che non è
+     "terzo") si resta a 400: la direzione che non fa mai chiedere più del
+     dovuto. */
+  const zonaFinale = destinazioneIata ? zonaDiScalo(destinazioneIata) : null;
+  const viaggioIntraUe = zonaFinale ? zonaFinale !== "terzo" : true;
+  const importo = fasciaArt7(km, viaggioIntraUe, r.ritardoFinale === "fra3e4");
 
   return {
     esito: "idoneo",

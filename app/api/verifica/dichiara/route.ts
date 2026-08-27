@@ -238,7 +238,7 @@ export async function POST(req: Request) {
         );
       }
       const kmViaggio = fatto.partenzaIata ? kmFraAeroporti(fatto.partenzaIata, scalo.iata) : null;
-      verdetto = valutaCoincidenza(fatto, r, kmViaggio);
+      verdetto = valutaCoincidenza(fatto, r, kmViaggio, scalo.iata);
       dichiarazione = { caso: "coincidenza", ...r, destinazioneFinale: scalo.iata };
       /* scalo.citta è già in italiano (aeroportoPerIata lo traduce). */
       destinazione = { iata: scalo.iata, citta: scalo.citta };

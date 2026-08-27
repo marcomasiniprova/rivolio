@@ -7,7 +7,14 @@
 > (Polar ha detto no; lo shadow è stato tolto). Lo stato vero e aggiornato
 > sta in `INIZIA-QUI.md`, non nei giri datati.
 
-**Aggiornato:** 2026-08-26 (giro #96: IL PANNELLO RIFINITO E BLINDATO. Cinque
+**Aggiornato:** 2026-08-27 (giro #98: il giro utente sui casi speciali sul
+gemello, e l'unico difetto vero trovato: la coincidenza "a destinazione
+dichiarata" (il percorso dell'app) calcolava la fascia sullo scalo di
+partenza invece che sulla destinazione finale, così un viaggio verso un
+paese terzo oltre 3.500 km con arrivo fra 3 e 4 ore usciva 400 invece di 300,
+più del dovuto. Chiuso: adesso guarda la destinazione, come il percorso a due
+tratte del sito. Golden set verde, falsi positivi 0 · giro #96: IL PANNELLO
+RIFINITO E BLINDATO. Cinque
 sezioni rifatte per Valerio («il mio pannello di controllo è dove vivrò»):
 Pratiche come lista chiara «di chi è la palla» (via il bollino grezzo «4»,
 dentro i filtri Da mandare/In attesa/Vinte/Chiuse coi numeri veri dal
@@ -127,6 +134,41 @@ campo email dell'Osservatorio non più schiacciato sul telefono, immagine
 social rifatta (era rimasta al prodotto viaggi).
 
 ## Dove siamo
+- **GIRO #98 (27/08): IL GIRO UTENTE SUI CASI SPECIALI, E LA COINCIDENZA
+  DELL'APP CHE POTEVA CHIEDERE PIÙ DEL DOVUTO.** Valerio: «giro utente sui
+  casi speciali», percorso completo, «sistema tutto quello che trovi».
+  Camminati uno per uno sul motore vero (voli demo), leggendo ogni verdetto a
+  occhio: ritardo (fasce 250/400/300/600), non idoneo per un minuto,
+  cancellato (le due domande, l'incerto che non paga), negato imbarco (art. 4,
+  il volontario che non spetta), declassamento (art. 10, il 30% col prezzo
+  all'italiana «129,90»), ritardo con rinuncia (art. 6 → art. 8), coincidenza
+  a due tratte e coincidenza a destinazione dichiarata. Tutti giusti tranne uno.
+  - 🔴 **LA COINCIDENZA "A DESTINAZIONE DICHIARATA" (il percorso dell'app)
+    CALCOLAVA LA FASCIA SULLO SCALO DI PARTENZA, NON SULLA DESTINAZIONE
+    FINALE.** Un Milano → ... → New York (unica prenotazione, oltre 3.500 km,
+    arrivo fra 3 e 4 ore) usciva **400 invece di 300**: più del dovuto, cioè
+    il falso positivo sull'importo che la regola numero uno vieta. E con
+    arrivo oltre le 4 ore usciva 400 invece di 600. La causa: `valutaCoincidenza`
+    usava `dentroLoSpazioEuropeo(f)`, dove `f` è il PRIMO volo (spesso tutto
+    dentro l'Unione). È lo stesso difetto che il percorso a due tratte del sito
+    aveva già chiuso guardando la destinazione: qui non era stato riportato.
+  - **LA CORREZIONE:** la fascia guarda la DESTINAZIONE FINALE
+    (`zonaDiScalo(destinazione) !== "terzo"`), identica al percorso a due
+    tratte. Réunion resta 400 (è UE), New York diventa 300/600, la Svizzera
+    resta 400 (non è "terzo"). Il motore vive sul server: il fix vale per l'app
+    senza toccarne il codice.
+  - ⚠️ **Nessun cliente vero poteva incapparci OGGI:** il sito usa il percorso
+    a due tratte (giusto) e l'app non è ancora sugli store. È un difetto
+    latente, chiuso prima che arrivasse in faccia a qualcuno.
+  - Prove: **golden set verde, falsi positivi 0**; nuova prova in
+    `fasce.spec.ts` che pretende 600/300 (mai 400) verso un paese terzo oltre
+    3.500 km e tiene i due percorsi allineati. Build, tipi e le prove del
+    motore verdi (92 su 92).
+  - **IL TEST DI CARICO VERO NON SI FA DA QUI** (proxy ~2,6s di base, cold
+    start, freno 20 check/minuto): il prompt k6 per una sessione locale è
+    pronto (bersaglio il sito vero, sale fino a romperlo). I numeri a caldo dal
+    gemello erano buoni (30 in parallelo: metà 0,38s, il 95% 0,57s; zero errori
+    di sistema fino a 50; il sito vero non ha sofferto).
 - **GIRO #97 (27/08): IL GEMELLO DI PROVA, SEPARATO DAL SITO VERO.** Valerio:
   «una bella coppia seria senza infettare l'altra». Nasce il ramo `staging`,
   un secondo indirizzo (`staging--rivolio.netlify.app`) dove si prova PRIMA
