@@ -7,7 +7,11 @@
 > (Polar ha detto no; lo shadow è stato tolto). Lo stato vero e aggiornato
 > sta in `INIZIA-QUI.md`, non nei giri datati.
 
-**Aggiornato:** 2026-08-27 (giro #98: il giro utente sui casi speciali sul
+**Aggiornato:** 2026-08-27 (giro #99: OpenAI (gpt-5.6-terra) al posto di
+Mistral col bug della temperatura chiuso, il meteo che adesso argomenta
+davvero nella controrisposta (e tolto dal reclamo), le lettere rinforzate
+con la costituzione in mora e gli interessi legali, e la pagina pubblica
+/creator tolta · giro #98: il giro utente sui casi speciali sul
 gemello, e l'unico difetto vero trovato: la coincidenza "a destinazione
 dichiarata" (il percorso dell'app) calcolava la fascia sullo scalo di
 partenza invece che sulla destinazione finale, così un viaggio verso un
@@ -134,6 +138,54 @@ campo email dell'Osservatorio non più schiacciato sul telefono, immagine
 social rifatta (era rimasta al prodotto viaggi).
 
 ## Dove siamo
+- **GIRO #99 (27/08): OPENAI AL POSTO DI MISTRAL, IL METEO CHE ADESSO
+  ARGOMENTA DAVVERO, E LE LETTERE RINFORZATE.**
+  - **IL CERVELLO DELL'AI ADESSO È OPENAI (gpt-5.6-terra), non più Mistral**
+    (scelta di Valerio). Un client solo, `lib/ai/openai.ts`, fa testo e
+    vision: la controrisposta, l'OCR della carta d'imbarco e degli
+    screenshot, l'autopilota scioperi. Il cancello deterministico non
+    cambia: l'AI legge e scrive dentro i paletti. Modello cambiabile da
+    `OPENAI_MODELLO`, chiave in `OPENAI_API_KEY`. Mistral resta da ripiego
+    finché non si toglie la chiave (poi si toglie anche il codice).
+  - 🔴 **UN BUG SPEGNEVA OPENAI IN SILENZIO.** gpt-5.6-terra rifiuta
+    `temperature: 0` (risponde 400: "only the default 1"). Così in
+    produzione OpenAI cadeva e a lavorare era la rete di sicurezza Mistral,
+    senza che si vedesse: l'OCR tornava col cancelletto di Mistral in ~1s.
+    Chiuso togliendo il parametro (il determinismo lo dà il cancello, non
+    la temperatura). Provato dal vivo con la chiave: testo, vision e JSON
+    mode funzionano; l'OCR su prod ora torna pulito.
+  - ⚠️ **COSTO: gpt-5.6-terra è 2$/1M in ingresso, 12$/1M in uscita.** A
+    stima, una pratica (2 controrisposte + 2 letture immagine) costa
+    ~3-4 centesimi. La prima lettera (reclamo) non usa l'AI: zero. Su una
+    pratica da 16,90€ è lo 0,2%.
+  - **IL METEO ADESSO VIENE USATO DAVVERO NELLA CONTRORISPOSTA.** Era
+    agganciato solo al reclamo (una riga di fatto). Ora `righeMeteoVolo`
+    (dal VPS Open-Meteo `meteo.artecai.cloud`, provato dal vivo col curl)
+    entra anche in `analizzaRifiuto`: se la compagnia dà la colpa al
+    maltempo, l'AI legge il meteo vero di quel giorno ai due estremi del
+    volo e smonta la scusa coi numeri (provato: dichiarano temporali e
+    fulmini a Malpensa, il dato dice 0 mm pioggia e raffiche deboli, e GPT
+    lo scrive). Se il tempo era brutto davvero, non insiste e resta
+    sull'onere della prova. **Tolto dal reclamo** (scelta di Valerio): lì
+    lo metteva sempre, anche col brutto tempo, regalando la scusa alla
+    compagnia prima che la invocassero.
+  - **LE LETTERE RINFORZATE (costituzione in mora + interessi legali),**
+    dopo ricerca sulle lettere EU261 vincenti. Il reclamo ora vale come
+    formale costituzione in mora (art. 1219 c.c.): interrompe la
+    prescrizione e fa decorrere gli interessi legali (art. 1224 c.c.)
+    sulla somma. Il sollecito lo ribadisce. NON aggiunti i 40€ di recupero
+    crediti (D.Lgs 231/2002: valgono solo tra imprese, non per un
+    consumatore). Il resto (specifiche del rifiuto, onere della prova a
+    loro carico, scadenze, escalation ente + conciliazione) c'era già.
+  - **TOLTA LA PAGINA PUBBLICA `/creator`** (reclutamento affiliati).
+    Restano intatti il pannello admin affiliati e il cruscotto del creator
+    che già collabora.
+  - ⚠️ **LE PROVE PLAYWRIGHT NON GIRANO IN QUESTO CONTENITORE** (l'ambiente
+    da un certo punto non cattura più l'output di Playwright). Verificato
+    col build verde e col controllo a mano delle assertion sulle lettere.
+    `npm run verify` va rilanciato sul PC di Valerio per la conferma.
+  - ⚠️ **DUE CHIAVI PASSATE IN CHAT DA RIGENERARE:** la chiave OpenAI e la
+    password del VPS meteo. Vanno cambiate su OpenAI/VPS e su Netlify.
 - **GIRO #98 (27/08): IL GIRO UTENTE SUI CASI SPECIALI, E LA COINCIDENZA
   DELL'APP CHE POTEVA CHIEDERE PIÙ DEL DOVUTO.** Valerio: «giro utente sui
   casi speciali», percorso completo, «sistema tutto quello che trovi».
