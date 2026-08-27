@@ -62,7 +62,7 @@ export async function POST(
     return NextResponse.json({ errore: "Pratica non trovata." }, { status: 404 });
   }
 
-  if (!process.env.MISTRAL_API_KEY) {
+  if (!process.env.OPENAI_API_KEY && !process.env.MISTRAL_API_KEY) {
     return NextResponse.json(
       { errore: "La lettura dei documenti non è attiva su questo ambiente." },
       { status: 503 },

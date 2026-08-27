@@ -2,6 +2,7 @@ import { RIFIUTI, schedaRifiuto, type MotivoRifiuto } from "../pratiche/rifiuto"
 import type { Dossier } from "../pratiche/dossier";
 import { dossierInParole } from "../pratiche/dossier";
 import { modoSicuroAttivo } from "../motore/modo-sicuro";
+import { completaOpenAI, openAIAttivo } from "./openai";
 
 /**
  * L'AI CHE LEGGE LA RISPOSTA DELLA COMPAGNIA E SCRIVE LA CONTRO-RISPOSTA.
@@ -52,6 +53,54 @@ import { modoSicuroAttivo } from "../motore/modo-sicuro";
    il cliente col nostro nome sopra. Il cancello deterministico più sotto
    resta identico: un modello più bravo non ha più libertà di inventare. */
 const MODELLO = "mistral-large-latest";
+
+/**
+ * Legge la risposta della compagnia col modello e torna il JSON grezzo (o
+ * null). Dal 27/08 il cervello è OpenAI (gpt-5.6-terra); se manca la chiave
+ * OpenAI si ripiega su Mistral finché la sua chiave è configurata. Rete di
+ * sicurezza per il passaggio: sparirà quando Mistral verrà tolto. Il
+ * cancello `controlla()` più sotto NON cambia: vale per qualunque modello.
+ */
+async function leggiRispostaColModello(
+  sistema: string,
+  utente: string,
+): Promise<string | null> {
+  if (openAIAttivo()) {
+    return completaOpenAI({ sistema, utente, json: true, maxTokens: 1500, timeoutMs: 25_000 });
+  }
+  const chiave = process.env.MISTRAL_API_KEY;
+  if (!chiave) return null;
+  try {
+    const r = await fetch("https://api.mistral.ai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${chiave}`,
+      },
+      body: JSON.stringify({
+        model: MODELLO,
+        temperature: 0,
+        response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: sistema },
+          { role: "user", content: utente },
+        ],
+      }),
+      signal: AbortSignal.timeout(25_000),
+    });
+    if (!r.ok) {
+      console.warn("[replica] Mistral ha risposto", r.status);
+      return null;
+    }
+    const dati = (await r.json()) as {
+      choices?: { message?: { content?: string } }[];
+    };
+    return dati.choices?.[0]?.message?.content ?? null;
+  } catch (e) {
+    console.warn("[replica] analisi fallita:", e);
+    return null;
+  }
+}
 
 export type AnalisiRifiuto = {
   /** Il motivo riconosciuto, fra gli otto. */
@@ -333,47 +382,17 @@ export async function analizzaRifiuto(
      pratica: cambia solo che il paragrafo su misura resta quello fisso. */
   if (await modoSicuroAttivo()) return null;
 
-  const chiave = process.env.MISTRAL_API_KEY;
-  if (!chiave) return null;
   const testo = rispostaCompagnia.trim();
   if (testo.length < 20) return null;
 
+  const utente = `# Il fascicolo del caso\n${dossierInParole(dossier)}\n\n# La risposta della compagnia, parola per parola\n"""\n${testo.slice(0, 12000)}\n"""`;
+
+  const contenuto = await leggiRispostaColModello(ISTRUZIONI, utente);
+  if (!contenuto) return null;
   let grezzo: RispostaModello;
   try {
-    const r = await fetch("https://api.mistral.ai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${chiave}`,
-      },
-      body: JSON.stringify({
-        model: MODELLO,
-        // Zero: su un testo che finisce in una lettera legale la fantasia
-        // non è una qualità.
-        temperature: 0,
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: ISTRUZIONI },
-          {
-            role: "user",
-            content: `# Il fascicolo del caso\n${dossierInParole(dossier)}\n\n# La risposta della compagnia, parola per parola\n"""\n${testo.slice(0, 12000)}\n"""`,
-          },
-        ],
-      }),
-      signal: AbortSignal.timeout(25_000),
-    });
-    if (!r.ok) {
-      console.warn("[replica] Mistral ha risposto", r.status);
-      return null;
-    }
-    const dati = (await r.json()) as {
-      choices?: { message?: { content?: string } }[];
-    };
-    const contenuto = dati.choices?.[0]?.message?.content;
-    if (!contenuto) return null;
     grezzo = JSON.parse(contenuto) as RispostaModello;
-  } catch (e) {
-    console.warn("[replica] analisi fallita:", e);
+  } catch {
     return null;
   }
 

@@ -1,4 +1,5 @@
 import { SERVIZIO_ATTIVO, supabaseServizio } from "@/lib/supabase/servizio";
+import { completaOpenAI, openAIAttivo } from "@/lib/ai/openai";
 import type { Sciopero } from "./scioperi";
 
 /**
@@ -233,6 +234,28 @@ Regole rigide:
 export async function estrai(
   testo: string,
 ): Promise<{ righe: unknown[]; problema?: string }> {
+  /* Dal 27/08 il cervello è OpenAI (gpt-5.6-terra); Mistral resta solo da
+     ripiego finché la sua chiave è configurata. Il filtro deterministico
+     più a valle (validaCandidato) non cambia: un modello non può scrivere
+     nel database uno sciopero che non passa i controlli. */
+  if (openAIAttivo()) {
+    const contenuto = await completaOpenAI({
+      sistema: ISTRUZIONI,
+      utente: testo,
+      json: true,
+      maxTokens: 2000,
+      timeoutMs: 20_000,
+    });
+    if (!contenuto) return { righe: [], problema: "OpenAI non ha risposto" };
+    try {
+      const oggetto = JSON.parse(contenuto) as { scioperi?: unknown };
+      const righe = Array.isArray(oggetto.scioperi) ? oggetto.scioperi : [];
+      return { righe: righe.slice(0, 40) };
+    } catch (e) {
+      return { righe: [], problema: `Estrazione fallita: ${(e as Error).message}` };
+    }
+  }
+
   const chiave = process.env.MISTRAL_API_KEY;
   if (!chiave) return { righe: [], problema: "MISTRAL_API_KEY assente" };
 

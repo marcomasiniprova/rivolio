@@ -15,7 +15,14 @@
  *   pratica va in conferma umana (shadow mode). L'AI non decide MAI.
  */
 
+import { openAIAttivo, trascriviImmagineOpenAI } from "@/lib/ai/openai";
+
 const MODELLO_OCR = "mistral-ocr-latest";
+
+/* Cosa chiediamo al modello vision: trascrivere, non interpretare. I campi
+   li tira fuori la regex qui sotto, deterministica. */
+const ISTRUZIONE_OCR =
+  "Trascrivi ESATTAMENTE tutto il testo che vedi in questa immagine, riga per riga, senza aggiungere, togliere o interpretare niente. È una carta d'imbarco, un biglietto aereo o una comunicazione di una compagnia aerea (email o screenshot). Riporta numeri di volo, date, orari, aeroporti e nomi così come appaiono. Se non c'è testo leggibile, rispondi con una riga vuota.";
 
 export type EstrattoDocumento = {
   /** "FR4001" se trovato nel documento. */
@@ -40,6 +47,17 @@ export async function testoDaDocumento(
   base64: string,
   tipoMime: string,
 ): Promise<string | null> {
+  /* OpenAI (gpt-5.6-terra) legge l'immagine e la trascrive: è il modo
+     nuovo, dal 27/08. Se non c'è la chiave OpenAI, o non torna niente e
+     Mistral è ancora configurato, si ripiega sull'OCR di Mistral qui sotto
+     (rete di sicurezza durante il passaggio; sparirà quando la chiave
+     Mistral verrà tolta). */
+  if (openAIAttivo()) {
+    const trascritto = await trascriviImmagineOpenAI(base64, tipoMime, ISTRUZIONE_OCR);
+    if (trascritto) return trascritto;
+    if (!process.env.MISTRAL_API_KEY) return null;
+  }
+
   const chiave = process.env.MISTRAL_API_KEY;
   if (!chiave) return null;
   try {
