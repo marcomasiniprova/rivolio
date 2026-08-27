@@ -3947,24 +3947,27 @@ social rifatta (era rimasta al prodotto viaggi).
    bot**, non il chat id: si somigliano e si scambiano facilissimamente.
    Per questo `/admin/impostazioni` adesso il chat id lo trova da solo e
    lo mostra da copiare, invece di far cercare @userinfobot.
-0-monitoraggio. **DUE OCCHI ESTERNI SUL SITO (audit 26/08).** Oggi Rivolio
-   non ha modo di sapere se è giù o se sta dando errori, tranne un cliente
-   che te lo dice. Due strumenti, tutti e due col piano GRATIS che basta:
-   a. **BetterStack** (uptime, «il sito risponde?»): crea l'account gratis,
-      *Create monitor*, URL `https://rivolio.it/api/salute`, controllo ogni
-      3 minuti, avvisi alla tua email (o Telegram). L'endpoint l'ho già
-      costruito io: risponde 200 se il database è ok, 503 se è giù. Gratis:
-      10 monitor, ne usi 1. ⚠️ Se hai già un monitor su **UptimeRobot**,
-      puntalo su `/api/salute` invece della home, oppure cancellalo e usa
-      BetterStack (il suo gratis è pensato per uso commerciale, quello di
-      UptimeRobot nel 2024 lo aveva vietato e sul 2026 c'è confusione).
-   b. **Sentry** (errori, «il codice esplode a un cliente?»): crea
-      l'account gratis (Developer, 5.000 errori/mese: ne basta un decimo),
-      progetto Next.js, puoi **saltare** «Connect your code» (non serve
-      GitHub). Ti serve solo il **DSN** (una stringa
-      `https://...@...ingest.sentry.io/...`): copiala e dammela, oppure
-      mettila su Netlify come `SENTRY_DSN` e `NEXT_PUBLIC_SENTRY_DSN`. Poi
-      cablo Sentry lato server e browser e guardiamo il build.
+0-monitoraggio. ✅ **DUE OCCHI ESTERNI SUL SITO: FATTI (26-27/08).**
+   a. **BetterStack (uptime): attivo.** Il monitor su
+      `https://rivolio.it/api/salute` è verde, controllo ogni 3 minuti,
+      100% di disponibilità. Se il sito va giù, lo sai tu prima dei
+      clienti. L'endpoint risponde 200 se il database è ok, 503 se è giù.
+   b. **Sentry (errori): cablato e collaudato.** Il DSN l'ho preso dal
+      connettore (è pubblico, sta in `lib/sentry-dsn.ts`); agganciato server
+      e browser (`instrumentation*.ts`, `sentry.*.config.ts`, `global-error`),
+      e aperta la CSP verso `*.sentry.io` (senza, il browser era muto). Solo
+      errori, niente tracciamento pesante, acceso solo in produzione. Regione
+      Germania (EU). **Collaudo end-to-end riuscito**: un errore di prova è
+      arrivato nel cruscotto (progetto rivolio-error-handling) e poi l'ho
+      segnato risolto col connettore; la rotta di prova è stata tolta dal
+      sito. ⚠️ Il 27/08 Sentry ha avuto un guasto (US degradato), ma la
+      nostra regione EU era operativa: per questo l'errore è arrivato lo
+      stesso.
+   ⚠️ **Unico di più facoltativo, quando vuoi:** l'auth token di Sentry
+      per le mappe del codice (stack trace del browser leggibili invece che
+      compressi). Si crea in Sentry, Settings, Auth Tokens; si mette su Netlify
+      come `SENTRY_AUTH_TOKEN` e il build lo usa da solo. Senza, Sentry
+      funziona lo stesso: cambia solo la leggibilità delle righe del browser.
 0-bis-sicurezza. **UNA SPUNTA SU SUPABASE, dieci secondi.** Il controllo
    di sicurezza del database (fatto l'11/08) segnala una cosa vera:
    **le password compromesse non vengono bloccate**. Supabase sa
