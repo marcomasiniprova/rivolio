@@ -127,6 +127,29 @@ campo email dell'Osservatorio non più schiacciato sul telefono, immagine
 social rifatta (era rimasta al prodotto viaggi).
 
 ## Dove siamo
+- **GIRO #97 (27/08): IL GEMELLO DI PROVA, SEPARATO DAL SITO VERO.** Valerio:
+  «una bella coppia seria senza infettare l'altra». Nasce il ramo `staging`,
+  un secondo indirizzo (`staging--rivolio.netlify.app`) dove si prova PRIMA
+  che le modifiche tocchino i clienti. Condivide il database col sito vero
+  (scelta di Valerio: gratis finché non ci sono clienti veri), quindi la
+  separazione è a RUNTIME: `lib/ambiente.ts` con `AMBIENTE_PROVA`, di DEFAULT
+  sempre produzione (un errore non può mai mettere il sito vero in modalità
+  prova: si sbaglia dalla parte sicura).
+  - Quattro barriere, INERTI in produzione, attive solo sul gemello:
+    fornitore sempre demo (niente costi né dati veri nel DB condiviso);
+    niente incassi con chiavi live (`cassaVeraVietata`); `casa()` punta al
+    gemello (`DEPLOY_PRIME_URL`), non a rivolio.it (i cookie restano
+    separati); gli eventi non entrano nei numeri del pannello vero. Più il
+    cartello «AMBIENTE DI PROVA» e la prova `prove/ambiente-prova.spec.ts`.
+  - ✅ **Collaudato sul vivo:** il gemello mostra il cartello (`AMBIENTE_PROVA`
+    acceso a runtime, il build Netlify del ramo è verde), il sito vero NON lo
+    mostra (spento, comportamento invariato). Provato con curl su entrambi.
+  - Il flusso serio: si lavora su `staging`, si verifica sul gemello, si porta
+    su `main` (deploy atomico Netlify: i clienti vedono il vecchio finché il
+    nuovo non è pronto, e il rollback è istantaneo).
+  - ⚠️ **Le prossime prove (giro utente critico + test di carico, scelte di
+    Valerio) girano SUL gemello**, con voli demo e cassa di prova: così non
+    toccano clienti, dati né soldi veri.
 - **GIRO #96 (26/08): IL PANNELLO A LUCIDO, L'AUDIT DI ROBUSTEZZA E I QUATTRO
   BUCHI CHIUSI.** Valerio: giro completo di rifinitura del pannello +
   «pensa a Rivolio come business, non come codice; audit robusto per la
