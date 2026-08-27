@@ -9,7 +9,6 @@ import {
   generaSollecito,
 } from "@/lib/lettera/genera";
 import { conciliazionePerPartenza, prontoPerConciliazione } from "@/lib/lettera/conciliazione";
-import { righeMeteoVolo } from "@/lib/meteo/openmeteo";
 import type { Passeggero, TipoPratica } from "@/lib/pratiche/pratiche";
 import { paragrafoSuMisura } from "@/lib/pratiche/dossier";
 import {
@@ -204,13 +203,16 @@ export async function GET(req: Request, contesto: { params: Promise<{ id: string
         versioneRegole: verifica.versione_regole,
       };
 
-      const meteo = await righeMeteoVolo(volo.payload_grezzo, volo.arrivo_effettivo_utc);
-
       const testo = generaReclamo(
         { passeggeri: pratica.passeggeri ?? [], tipo: pratica.tipo, email: pratica.email },
         fatto,
         verdetto,
-        { meteo, cura: pratica.cura_richiesta ?? false },
+        /* Niente meteo nel reclamo (scelta di Valerio, 27/08): la prima
+           lettera lo metterebbe SEMPRE, anche col brutto tempo, regalando
+           la scusa alla compagnia prima ancora che la tirino fuori. Il
+           meteo vive solo nella controrisposta, dove l'AI lo usa solo se
+           conviene (rotta risposta -> analizzaRifiuto). */
+        { cura: pratica.cura_richiesta ?? false },
       );
 
       if (testo) {
