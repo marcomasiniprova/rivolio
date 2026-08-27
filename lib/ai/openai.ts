@@ -45,9 +45,13 @@ async function chiama(
   try {
     const corpo: Record<string, unknown> = {
       model: MODELLO_OPENAI,
-      /* Zero: quello che esce finisce in una lettera legale o in
-         un'estrazione di campi. La fantasia non è una qualità. */
-      temperature: 0,
+      /* ⚠️ NIENTE temperature. gpt-5.6-terra accetta SOLO il valore di
+         default (1): con `temperature: 0` risponde 400 e la chiamata cade
+         (verificato dal vivo il 27/08, l'errore diceva "does not support 0
+         with this model"). La determinismo che serve non lo dà la
+         temperatura: lo dà il cancello a valle (controlla(), estraiCampi()),
+         che boccia sentenze, cifre e campi inventati qualunque cosa scriva
+         il modello. */
       /* La famiglia GPT-5 vuole max_completion_tokens, non max_tokens. */
       max_completion_tokens: opz.maxTokens ?? 1500,
       messages: messaggi,
