@@ -8,7 +8,14 @@ import { affiliatoDaCodice } from "@/lib/affiliati/affiliati";
 import { COOKIE_REF } from "@/lib/affiliati/codice";
 import { utenteCreatore } from "@/lib/affiliati/creatore";
 import { listinoScontato } from "@/lib/pratiche/prezzo";
-import { creaPratica, registraEvento, transizionePratica } from "@/lib/pratiche/pratiche";
+import {
+  creaPratica,
+  praticaPerVerifica,
+  registraEvento,
+  transizionePratica,
+} from "@/lib/pratiche/pratiche";
+import { ingressoDopoPagamento } from "@/lib/pratiche/ingresso";
+import { utenteCollegato } from "@/lib/supabase/server";
 import { traccia } from "@/lib/eventi/registra";
 import { SERVIZIO_ATTIVO, supabaseServizio } from "@/lib/supabase/servizio";
 
@@ -87,6 +94,31 @@ export async function GET(req: NextRequest) {
        niente, mai. */
     if (verifica.esito !== "idoneo" || verifica.conferma === "corretta") {
       return paginaRisultato();
+    }
+
+    /* 🔴 DOPPIO ADDEBITO. Se una pratica per questa verifica esiste GIÀ, è
+       già stata comprata: aprire una seconda cassa Stripe prenderebbe i
+       soldi due volte per un prodotto solo. Succede cliccando «famiglia»
+       dopo aver preso la «singola» (chiave di pagamento diversa, quindi
+       Stripe apre una sessione nuova anche entro le 24 ore), oppure
+       riaprendo il link del risultato dopo un giorno (segnalibro, link
+       condiviso, url di annullamento). Non si apre un secondo checkout: si
+       manda alla pratica che c'è già, con lo stesso ingresso sicuro del
+       pagamento. È l'idempotenza che la rotta col credito aveva e questa
+       no (audit del 28/08). */
+    const esistente = await praticaPerVerifica(verifica.id);
+    if (esistente) {
+      traccia(req, { tipo: "pratica", extra: { tipo, giaAperta: true } });
+      const collegato = await utenteCollegato();
+      const ingresso = await ingressoDopoPagamento(
+        esistente.email,
+        `/pratica/${esistente.id}`,
+        collegato?.email ?? null,
+      );
+      return NextResponse.redirect(
+        ingresso.startsWith("http") ? ingresso : versoCasa(ingresso, req),
+        303,
+      );
     }
 
     /* CREATOR GRATIS A VITA: se chi apre la pratica è un account creator, la
