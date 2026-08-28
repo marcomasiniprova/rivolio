@@ -1,5 +1,3 @@
-import { SERVIZIO_ATTIVO, supabaseServizio } from "@/lib/supabase/servizio";
-
 /**
  * LE LETTURE DEL PANNELLO.
  *
@@ -15,35 +13,6 @@ import { SERVIZIO_ATTIVO, supabaseServizio } from "@/lib/supabase/servizio";
 
 /** Un conteggio che sa dire di non sapere. */
 export type Numero = number | null;
-
-/**
- * Quanti verdetti idonei non sono ancora stati guardati a campione.
- *
- * ⚠️ QUI C'ERA SCRITTO che è "l'unico numero del pannello che blocca una
- * vendita, perché finché la conferma non arriva quel cliente non può
- * pagare". Era vero fino al 12/08; da quel giorno la cassa non aspetta
- * più nessuno, e questa è una coda di controllo, non un cancello.
- * Lasciare la frase vecchia spingeva a lavorare con urgenza una lista
- * che non trattiene un euro.
- */
-export async function contaInAttesa(): Promise<Numero> {
-  if (!SERVIZIO_ATTIVO) return null;
-  try {
-    const { count, error } = await supabaseServizio()
-      .from("verifiche")
-      .select("id", { count: "exact", head: true })
-      .eq("esito", "idoneo")
-      .eq("conferma", "in_attesa");
-    if (error) {
-      console.error("[pannello] coda verdetti non letta:", error.message);
-      return null;
-    }
-    return count ?? 0;
-  } catch (e) {
-    console.error("[pannello] coda verdetti non letta:", e);
-    return null;
-  }
-}
 
 /**
  * La mezzanotte italiana di oggi, come istante UTC.

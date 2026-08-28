@@ -7,7 +7,17 @@
 > (Polar ha detto no; lo shadow è stato tolto). Lo stato vero e aggiornato
 > sta in `INIZIA-QUI.md`, non nei giri datati.
 
-**Aggiornato:** 2026-08-27 (giro #99: OpenAI (gpt-5.6-terra) al posto di
+**Aggiornato:** 2026-08-28 (giro #100: la **newsletter settimanale
+dell'Osservatorio**, che PRIMA non esisteva (il sito prometteva "una email
+a settimana" e non la mandava nessuno: solo conferma + benvenuto, poi
+silenzio). Ora un cron il lunedì la compone da dati veri (ritardi degli
+aeroporti + scioperi in arrivo), l'AI scrive il contorno e un cancello
+butta il suo testo se ci infila una cifra. Più i fix dell'audit
+pre-lancio (doppio addebito, prezzo "1.500" → 1500, timeout AI sotto il
+tetto Netlify), lo **shadow mode tolto DEL TUTTO** (verdetti "automatica",
+via la sezione controllo a campione, le azioni Va bene/Correggi, la KPI e
+la variabile) e il bottone follow-up spiegato in parole · giro #99:
+OpenAI (gpt-5.6-terra) al posto di
 Mistral col bug della temperatura chiuso, il meteo che adesso argomenta
 davvero nella controrisposta (e tolto dal reclamo), le lettere rinforzate
 con la costituzione in mora e gli interessi legali, e la pagina pubblica

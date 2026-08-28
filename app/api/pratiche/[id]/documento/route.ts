@@ -131,18 +131,13 @@ export async function POST(
         : `Documento caricato ma illeggibile. ${confronto.dettagli}`,
   );
 
-  /* Discorde = la pratica torna sotto occhio umano: la verifica passa
-     in attesa di conferma (shadow), MAI un cambio di verdetto da codice. */
-  if (confronto.esito === "discorde" && pratica.verifica_id) {
-    try {
-      await supabaseServizio()
-        .from("verifiche")
-        .update({ conferma: "in_attesa" })
-        .eq("id", pratica.verifica_id);
-    } catch (e) {
-      console.warn("[documento] verifica non aggiornabile:", e);
-    }
-  }
+  /* Un documento DISCORDE resta scritto nella cronologia della pratica
+     (evento `documento_incrociato` qui sopra): è lì che Valerio lo vede.
+     Prima, con lo shadow mode, rimetteva la verifica "in attesa" per una
+     revisione a mano; lo shadow è stato tolto il 28/08, e comunque a quel
+     punto la pratica è già pagata, quindi quel flag non cambiava nulla.
+     MAI un cambio di verdetto da codice: il documento si registra, non
+     decide. */
 
   return NextResponse.json({
     ok: true,

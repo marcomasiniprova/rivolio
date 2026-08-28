@@ -112,12 +112,11 @@ export async function evadiPagamentoPratica(
     return { http: 200, body: { ok: true, gestito: false, motivo: "Verifica inesistente, loggato." } };
   }
 
-  /* Si vende solo un idoneo che nessuno ha dichiarato sbagliato. Lo shadow
-     mode in produzione è acceso da solo, quindi OGNI verdetto nasce "in
-     attesa": bloccare su quello vorrebbe dire non incassare mai. A fermare
-     la vendita resta il caso giusto: un verdetto guardato e corretto a mano
-     (conferma === "corretta"). Su quello la pratica non si crea e serve un
-     rimborso. */
+  /* Si vende solo un idoneo che nessuno ha dichiarato sbagliato a mano.
+     Il pezzo su "corretta" è l'ULTIMO RESTO dello shadow mode, tolto il
+     28/08: nessun verdetto nuovo nasce più "corretta", ma la riga resta
+     come rete per un eventuale vecchio verdetto marcato sbagliato. Su
+     quello la pratica non si crea e serve un rimborso a mano. */
   if (verifica.esito !== "idoneo" || verifica.conferma === "corretta") {
     console.error(
       `${eti} PAGAMENTO SU CASO NON VENDIBILE: ordine ${ordineId ?? "?"}, verifica ${verificaId}, esito "${verifica.esito}", conferma "${verifica.conferma}". Pratica NON creata: serve un rimborso a mano.`,

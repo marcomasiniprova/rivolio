@@ -1,7 +1,6 @@
 import { Scheda } from "@/components/admin/Grafici";
 import { Avviso, Vuoto, euro } from "@/components/admin/Pezzi";
 import Comandi from "@/components/admin/Comandi";
-import ControlloVerdetti from "@/components/admin/ControlloVerdetti";
 import ElencoPratiche, { type RigaPratica } from "@/components/admin/pratiche/ElencoPratiche";
 import { soloAdmin } from "@/lib/admin/guardia";
 import { SERVIZIO_ATTIVO, supabaseServizio } from "@/lib/supabase/servizio";
@@ -136,18 +135,6 @@ export default async function PaginaPratiche() {
       </Scheda>
 
       <Comandi />
-
-      {/* ── VERDETTI: mezza sezione dentro Pratiche (Valerio, 26/08). ── */}
-      <div className="mt-2 border-t border-bordo pt-6">
-        <h2 className="font-display text-[1.3rem] tracking-[-0.02em] text-inchiostro">
-          Verdetti, il controllo a campione
-        </h2>
-        <p className="mb-4 mt-1 text-[13px] leading-relaxed text-fumo">
-          Gli ultimi idonei, dal più recente. È una spunta a campione sul motore: nessuna di
-          queste righe sta bloccando un incasso.
-        </p>
-        <ControlloVerdetti />
-      </div>
     </div>
   );
 }

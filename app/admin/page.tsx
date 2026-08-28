@@ -3,7 +3,6 @@ import { ArrowRight } from "lucide-react";
 import { Area, Imbuto, Legenda, Scheda } from "@/components/admin/Grafici";
 import GraficoGiorni from "@/components/admin/GraficoGiorni";
 import { Avviso, Kpi, euro, oNonLetto } from "@/components/admin/Pezzi";
-import { contaInAttesa } from "@/lib/admin/dati";
 import { soloAdmin } from "@/lib/admin/guardia";
 import { CHECK_A_PAGAMENTO } from "@/lib/check/ingresso";
 import { leggiCruscotto, leggiSerie, type GiornoSerie } from "@/lib/eventi/lettura";
@@ -71,11 +70,7 @@ export default async function PaginaPanoramica() {
      collegato lo è anche un cliente che ha comprato una pratica. */
   await soloAdmin();
 
-  const [c, serie, inAttesa] = await Promise.all([
-    leggiCruscotto(8),
-    leggiSerie(GIORNI),
-    contaInAttesa(),
-  ]);
+  const [c, serie] = await Promise.all([leggiCruscotto(8), leggiSerie(GIORNI)]);
 
   const q = (n: number | null | undefined) => oNonLetto(n);
   const oggi = c.oggi;
@@ -156,17 +151,6 @@ export default async function PaginaPanoramica() {
           etichetta="Pratiche pagate, 7 giorni"
           valore={q(settimana?.pagato)}
           nota={`Oggi: ${q(oggi?.pagato)}`}
-        />
-        <Kpi
-          etichetta="Verdetti da guardare"
-          valore={oNonLetto(inAttesa)}
-          nota={
-            inAttesa === null
-              ? "Elenco non letto."
-              : inAttesa > 0
-                ? "Controllo a campione: non stanno bloccando nessun pagamento."
-                : "Guardati tutti."
-          }
         />
       </div>
 

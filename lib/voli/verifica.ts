@@ -12,8 +12,8 @@
  *   solo uno stato "sconosciuto" può essere aggiornato da un dato migliore.
  * - doppia fonte SOLO se entrambe le chiavi esistono: scarto > 15 minuti
  *   sull'arrivo effettivo → fonti_discordanti → il motore dirà incerto.
- * - shadow mode (SHADOW_MODE=1): il verdetto nasce 'in_attesa' e un umano
- *   lo conferma da /admin prima che si possa vendere.
+ * - il verdetto nasce già valido ("automatica"): lo shadow mode, cioè la
+ *   coda di controllo a campione in /admin, è stato tolto il 28/08.
  * - MAI un'eccezione verso l'alto: ogni guasto di rete o database diventa
  *   un esito incerto o un campo nullo, non un 500 in faccia all'utente.
  */
@@ -400,9 +400,10 @@ export async function verificaVolo(voloGrezzo: string, dataGrezza: string): Prom
   }
 
   // ── Strato 2c: gli scioperi noti del giorno (tabella a mano) ─────────
-  /* Fail-open dichiarato: se il DB tace, niente flag e si procede; il
-     rischio residuo lo copre lo shadow mode (conferma umana). I voli
-     demo (ZZ*) non interrogano il DB: restano deterministici. */
+  /* Fail-open dichiarato: se il DB tace, niente flag e si procede. Il
+     rischio residuo (vendere in un giorno di sciopero non rilevato) resta
+     ed è accettato: lo shadow mode che lo copriva è stato tolto il 28/08.
+     I voli demo (ZZ*) non interrogano il DB: restano deterministici. */
   if (!fatto.voloIata.startsWith("ZZ")) {
     /* Alla tabella serve il codice IATA, non il nome del vettore: lo
        prendiamo dal numero di volo (per i casi vendibili, IsOperator,
@@ -471,25 +472,14 @@ export async function verificaVolo(voloGrezzo: string, dataGrezza: string): Prom
           ritardo_minuti: "ritardoMinuti" in verdetto ? verdetto.ritardoMinuti : null,
           motivo: verdetto.motivo,
           versione_regole: verdetto.versioneRegole,
-          // Shadow mode (SPEC §4): il verdetto aspetta la conferma umana in /admin.
-          /* Shadow mode ACCESO di default in produzione (11/08): prima
-             serviva la variabile SHADOW_MODE=1 su Netlify, e una
-             variabile che va messa a mano è una variabile che un giorno
-             qualcuno dimentica, spegnendo la conferma umana senza
-             volerlo. Adesso in produzione è acceso da solo e si spegne
-             solo scrivendo esplicitamente SHADOW_MODE=0: dimenticarsene
-             porta dalla parte prudente, non dall'altra. */
-          /* ⚠️ Dal 12/08 "in attesa" non ferma più la vendita (il
-             controllo umano avviene DOPO, vedi checkout/route.ts), quindi
-             questo campo dice solo se il verdetto è ancora da rivedere.
-             Resta acceso da solo in produzione: dimenticarsene porta
-             dalla parte prudente. */
-          conferma:
-            process.env.SHADOW_MODE === "0"
-              ? "automatica"
-              : process.env.SHADOW_MODE === "1" || process.env.NODE_ENV === "production"
-                ? "in_attesa"
-                : "automatica",
+          /* Lo shadow mode è stato TOLTO (28/08, scelta di Valerio). Non
+             c'è più il controllo a campione: ogni verdetto nasce
+             "automatica", cioè valido da subito. La cassa non aspettava
+             comunque nessuno da mesi (il muro umano era già sparito il
+             12/08), quindi togliere la coda non cambia una sola vendita.
+             Il campo `conferma` resta nello schema, sempre "automatica",
+             per non toccare le poche righe che lo leggono ancora. */
+          conferma: "automatica",
         })
         .select("id")
         .single();

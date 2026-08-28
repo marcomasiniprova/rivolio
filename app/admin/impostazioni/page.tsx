@@ -179,15 +179,6 @@ function stato(): Voce[] {
       peso: "facoltativa",
       ceSta: c(process.env.NEXT_PUBLIC_SITO),
     },
-    {
-      nome: "SHADOW_MODE",
-      serve:
-        'Riempie l\'elenco "Verdetti da guardare": ogni analisi idonea ci finisce dentro finché non la marchi. ⚠️ NON blocca nessun pagamento (non lo fa più dal 12 agosto): è un controllo a campione sul motore. Si può TOGLIERE: in produzione è acceso da solo.',
-      seManca:
-        "Niente: in produzione resta acceso lo stesso. Con SHADOW_MODE=0 l'elenco del campione resta sempre vuoto e il motore non lo controlla più nessuno.",
-      peso: "facoltativa",
-      ceSta: process.env.SHADOW_MODE !== "0",
-    },
   ];
 }
 

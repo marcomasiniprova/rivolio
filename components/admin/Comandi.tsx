@@ -27,18 +27,17 @@ export default function Comandi() {
         <h2 className="font-display text-[15.5px] leading-tight tracking-[-0.02em]">
           Giro di follow-up
         </h2>
-        {/* ⚠️ I giorni erano rimasti a "T+2, T+15, T+30, T+60", cioè al
-            calendario di prima del giro #45: dal 10/08 il sollecito parte
-            al 42 e la segnalazione all'ente al 56. Un pannello che
-            dichiara tempi che il motore non usa più fa dubitare di tutto
-            il resto. I numeri veri stanno in lib/pratiche/rifiuto.ts e in
-            app/api/motore/segui. */}
+        {/* Spiegato in parole per Valerio (28/08): niente più "T+42". I
+            giorni veri stanno in lib/pratiche/rifiuto.ts e in
+            app/api/motore/segui, non qui: questo è solo il testo. */}
         <p className="mt-1 max-w-2xl text-[12.5px] leading-relaxed text-fumo">
-          Scorre le pratiche aperte e manda l&apos;email dovuta per il punto in cui sono: T+2
-          dal pagamento se la lettera non risulta inviata, poi T+42 (sollecito), T+56
-          (segnalazione all&apos;ente) e T+90 (com&apos;è andata) dall&apos;invio. Al massimo
-          una per pratica, mai due volte la stessa. In produzione lo farà un orologio una
-          volta al giorno.
+          Ogni mattina, da solo, un orologio guarda le pratiche aperte e manda a ognuna
+          l&apos;email giusta per il punto in cui è: due giorni dopo il pagamento un
+          promemoria per inviare la lettera; poi, dall&apos;invio, il sollecito (dopo sei
+          settimane di silenzio della compagnia), la segnalazione all&apos;ente e la domanda
+          «com&apos;è andata». Mai due volte la stessa. <strong>Questo bottone fa lo stesso
+          giro adesso, a mano</strong>: serve a te per provarlo. Con nessuna pratica aperta
+          non manda niente e te lo dice qui sotto.
         </p>
       </div>
       <Button type="submit" disabled={giro} size="sm" className="self-start">
