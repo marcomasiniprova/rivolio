@@ -249,6 +249,14 @@ Ai sensi degli articoli 5 e 7 del Regolamento (CE) n. 261/2004, come interpretat
 
 ${percheFascia(verdetto.importo, verdetto.ritardoMinuti, fatto.kmOrtodromica)}`;
 
+  /* La clausola sulle circostanze eccezionali (e la riprotezione su voli
+     alternativi) vale per la compensazione da RITARDO, e per la coincidenza
+     persa, che è un ritardo all'arrivo finale. Sul declassamento (art. 10) è
+     fuori tema, e sulla rinuncia col rimborso (art. 8) CONTRADDICE il corpo,
+     che dice che le circostanze eccezionali non scusano la restituzione. Su
+     quei due casi non si mette (audit del 28/08). */
+  const senzaEccezionali = caso === "declassamento" || caso === "ritardo_rinuncia";
+
   const corpo = `${intestazione(fatto, compagnia)},
 
 ${n === 1 ? "scrivo in qualità di passeggero" : "scrivo a nome dei passeggeri sotto elencati"} del volo ${fatto.voloIata} del ${giornoVolo}, operato dalla vostra compagnia.${vettoreMarketing}
@@ -281,7 +289,7 @@ Il pagamento potrà essere effettuato con bonifico bancario sulle seguenti coord
 Intestato a: ${famigliaSenzaNomi ? "[Nome e cognome dell'intestatario del conto]" : passeggeri[0]}
 IBAN: [qui il tuo IBAN]
 
-Chiedo il pagamento, o una risposta scritta e motivata, entro 30 giorni dal ricevimento della presente. Se intendete invocare circostanze eccezionali, chiedo che siano indicate in modo specifico e documentate: l'onere della prova è a vostro carico, e l'esonero richiede anche la dimostrazione di aver adottato tutte le misure ragionevoli, ivi compresa la riprotezione su voli alternativi, anche operati da altri vettori.
+Chiedo il pagamento, o una risposta scritta e motivata, entro 30 giorni dal ricevimento della presente.${senzaEccezionali ? "" : " Se intendete invocare circostanze eccezionali, chiedo che siano indicate in modo specifico e documentate: l'onere della prova è a vostro carico, e l'esonero richiede anche la dimostrazione di aver adottato tutte le misure ragionevoli, ivi compresa la riprotezione su voli alternativi, anche operati da altri vettori."}
 
 La presente vale quale formale costituzione in mora ai sensi dell'articolo 1219 del codice civile. In mancanza di pagamento entro il termine indicato, sulla somma dovuta decorreranno gli interessi legali ai sensi dell'articolo 1224 del codice civile dalla data della presente.
 

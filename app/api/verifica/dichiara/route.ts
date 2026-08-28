@@ -16,6 +16,7 @@ import {
 import { verificaVolo } from "@/lib/voli/verifica";
 import { aeroportoPerIata, inItaliano } from "@/lib/voli/aeroporti";
 import { kmFraAeroporti } from "@/lib/voli/distanza";
+import { prezzoInEuro } from "@/lib/pratiche/prezzo-testo";
 import { scadenzaStimata, VERSIONE_REGOLE } from "@/lib/regole/eu261";
 import { SERVIZIO_ATTIVO, supabaseServizio } from "@/lib/supabase/servizio";
 
@@ -117,12 +118,10 @@ export async function POST(req: Request) {
     verdetto = valutaNegato(fatto, r);
     dichiarazione = { caso: "negato", ...r };
   } else if (c.caso === "declassamento") {
-    /* Il prezzo può arrivare come numero o come stringa "129,90": si
-       normalizza qui, la virgola all'italiana compresa. */
-    const grezzo =
-      typeof c.prezzo === "number"
-        ? c.prezzo
-        : Number(String(c.prezzo ?? "").replace(/[^\d.,]/g, "").replace(",", "."));
+    /* Il prezzo lo scrive l'utente: lo porta a numero `prezzoInEuro`, che
+       regge sia la virgola all'italiana ("129,90") sia il punto delle
+       migliaia ("1.500" → 1500, non 1,5, che era il difetto). */
+    const grezzo = prezzoInEuro(c.prezzo);
     const r = { volonta: c.volonta, prezzo: grezzo };
     if (!rispostaDeclassamentoValida(r)) {
       return NextResponse.json(
@@ -137,12 +136,9 @@ export async function POST(req: Request) {
     dichiarazione = { caso: "declassamento", volonta: r.volonta, prezzo: r.prezzo };
   } else if (c.caso === "ritardo_rinuncia") {
     /* Ritardo di 5 ore e più con rinuncia (art. 6 → art. 8): il prezzo del
-       biglietto lo dà l'utente, come nel declassamento. La virgola
-       all'italiana ("129,90") si normalizza qui. */
-    const grezzo =
-      typeof c.prezzo === "number"
-        ? c.prezzo
-        : Number(String(c.prezzo ?? "").replace(/[^\d.,]/g, "").replace(",", "."));
+       biglietto lo dà l'utente, come nel declassamento. Lo normalizza
+       `prezzoInEuro` (virgola all'italiana e punto delle migliaia). */
+    const grezzo = prezzoInEuro(c.prezzo);
     const r = { rinuncia: c.rinuncia, giaRimborsato: c.giaRimborsato, prezzo: grezzo };
     if (!rispostaRitardoRinunciaValida(r)) {
       return NextResponse.json(

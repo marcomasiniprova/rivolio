@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import { COPY } from "@/lib/copy";
+import { prezzoInEuro } from "@/lib/pratiche/prezzo-testo";
 
 /**
  * "Ti hanno lasciato a terra o hai perso una coincidenza?"
@@ -99,8 +100,9 @@ export default function DichiaraCaso({
   const [errore, setErrore] = useState("");
   const router = useRouter();
 
-  /* Il prezzo digitato, in numero: la virgola all'italiana compresa. */
-  const prezzoNum = Number(prezzo.replace(/[^\d.,]/g, "").replace(",", "."));
+  /* Il prezzo digitato, in numero: `prezzoInEuro` regge la virgola
+     all'italiana ("129,90") e il punto delle migliaia ("1.500" → 1500). */
+  const prezzoNum = prezzoInEuro(prezzo);
   const prezzoOk = Number.isFinite(prezzoNum) && prezzoNum > 0;
 
   const pronto =
