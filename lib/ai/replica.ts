@@ -66,7 +66,10 @@ async function leggiRispostaColModello(
   utente: string,
 ): Promise<string | null> {
   if (openAIAttivo()) {
-    return completaOpenAI({ sistema, utente, json: true, maxTokens: 1500, timeoutMs: 25_000 });
+    /* 15s: sta sotto il tetto della funzione Netlify (26s), così se il
+       modello è lento la controrisposta ripiega sul testo fisso invece di
+       far cadere la funzione. La lettera fissa è comunque corretta. */
+    return completaOpenAI({ sistema, utente, json: true, maxTokens: 1500, timeoutMs: 15_000 });
   }
   const chiave = process.env.MISTRAL_API_KEY;
   if (!chiave) return null;
@@ -86,7 +89,9 @@ async function leggiRispostaColModello(
           { role: "user", content: utente },
         ],
       }),
-      signal: AbortSignal.timeout(25_000),
+      /* Ripiego più corto del primo tentativo: OpenAI (15s) + Mistral (9s)
+         = 24s, dentro i 26s della funzione. */
+      signal: AbortSignal.timeout(9_000),
     });
     if (!r.ok) {
       console.warn("[replica] Mistral ha risposto", r.status);

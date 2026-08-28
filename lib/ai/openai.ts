@@ -64,7 +64,13 @@ async function chiama(
         Authorization: `Bearer ${chiave}`,
       },
       body: JSON.stringify(corpo),
-      signal: AbortSignal.timeout(opz.timeoutMs ?? 30_000),
+      /* ⚠️ Il tetto sta SOTTO i 26s della funzione Netlify (netlify.toml):
+         se l'AI è lenta scatta questo timeout, la chiamata torna null e chi
+         la usa degrada in modo pulito (testo fisso, oppure "scrivi a mano"
+         sull'OCR), invece di farsi uccidere dalla piattaforma con un 502
+         PRIMA che il ripiego parta. Un timeout più lungo del tetto è un
+         ripiego che non viene mai eseguito. */
+      signal: AbortSignal.timeout(opz.timeoutMs ?? 15_000),
     });
     if (!r.ok) {
       /* Vistoso: se la chiave o il modello sono sbagliati, si vede subito
@@ -112,7 +118,7 @@ export async function trascriviImmagineOpenAI(
   base64: string,
   tipoMime: string,
   istruzione: string,
-  timeoutMs = 30_000,
+  timeoutMs = 15_000,
 ): Promise<string | null> {
   return chiama(
     [

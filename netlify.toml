@@ -9,3 +9,13 @@
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+# Il tetto di durata di una funzione sincrona. Il default di Netlify è 10s:
+# troppo poco per il check sotto un picco forte (fa più letture al database
+# in fila) e per le chiamate all'AI. 26s è il massimo di Netlify per le
+# funzioni sincrone. ⚠️ Perché superi i 10s serve il piano Pro: su un piano
+# base resta capato a 10s. I timeout verso l'AI (lib/ai/*) sono comunque
+# scritti per stare dentro questo tetto e degradare in modo pulito, non
+# con un 502.
+[functions]
+  maxDuration = 26

@@ -73,7 +73,9 @@ export async function testoDaDocumento(
           ? { type: "document_url", document_url: `data:${tipoMime};base64,${base64}` }
           : { type: "image_url", image_url: `data:${tipoMime};base64,${base64}` },
       }),
-      signal: AbortSignal.timeout(30_000),
+      /* Ripiego più corto del primo tentativo: OpenAI (15s) + Mistral (9s)
+         = 24s, dentro i 26s della funzione Netlify. */
+      signal: AbortSignal.timeout(9_000),
     });
     if (!r.ok) {
       console.warn("[ocr] Mistral ha risposto", r.status);
