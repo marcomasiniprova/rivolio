@@ -93,7 +93,13 @@ function StatTile({
 
 function BarraTraguardo({ t, animato }: { t: Traguardo; animato: boolean }) {
   const [montato, setMontato] = useState(false);
-  useEffect(() => setMontato(true), []);
+  // Il flag di montaggio, dopo il primo disegno (requestAnimationFrame): così
+  // la barra parte da 0 e poi anima fino alla percentuale. In un rAF e non
+  // dritto nell'effetto anche per la regola react-hooks/set-state-in-effect.
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setMontato(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
   const pct = t.segmento > 0 ? Math.min(100, Math.round((t.dentro / t.segmento) * 100)) : 0;
   const largo = montato || !animato ? pct : 0;
   const titolo =
@@ -139,11 +145,16 @@ export default function DashboardCreator({ dati }: { dati: DatiCreator }) {
   const router = useRouter();
   const [animato, setAnimato] = useState(true);
 
-  // Meno animazioni se l'utente le ha chieste ridotte.
+  // Meno animazioni se l'utente le ha chieste ridotte. Il setState sta in un
+  // requestAnimationFrame (dopo il primo disegno) e non dritto nell'effetto,
+  // anche per la regola react-hooks/set-state-in-effect.
   useEffect(() => {
     if (typeof window === "undefined" || !window.matchMedia) return;
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (mq.matches) setAnimato(false);
+    const id = requestAnimationFrame(() => {
+      if (mq.matches) setAnimato(false);
+    });
+    return () => cancelAnimationFrame(id);
   }, []);
 
   // Vivo: si aggiorna da solo, e si ferma quando la scheda è in secondo piano.
