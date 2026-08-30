@@ -61,8 +61,17 @@ test.describe("Lo stesso volo non si paga due volte", () => {
 
   test("e non gli si consuma un secondo credito", () => {
     const r = senzaCommenti(leggi("app/api/verifica/route.ts"));
-    const i = r.indexOf("const siConsuma");
-    expect(r.slice(i, i + 300)).toContain("!giaPagata");
+    const i = r.indexOf("let siConsuma");
+    expect(i, "il consumo del credito deve esistere").toBeGreaterThan(-1);
+    /* La riserva atomica (giro #96) tiene il conto: lo stesso volo gia'
+       pagato torna "gia", che non e' ne' "riservato" ne' "errore", quindi il
+       consumo resta a false. Nel degrado (database giu') il consumo e'
+       guardato da !giaPagataDegrado, l'erede diretto del vecchio !giaPagata. */
+    const blocco = r.slice(i, i + 400);
+    expect(blocco, "il consumo vero parte solo da una riserva nuova").toContain(
+      'riserva === "riservato"',
+    );
+    expect(blocco, "il degrado non riconsuma un volo gia' pagato").toContain("!giaPagataDegrado");
   });
 
   test("⚠️ un volo DIVERSO continua a consumare: è quello che vendiamo", () => {

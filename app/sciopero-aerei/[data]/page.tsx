@@ -38,9 +38,18 @@ type Parametri = { params: Promise<{ data: string }> };
 
 const DATA_OK = /^\d{4}-\d{2}-\d{2}$/;
 
+/* La forma non basta: "2026-02-30" ha la forma giusta ma non esiste. Una data
+   impossibile deve dare 404 SUBITO, senza nemmeno interrogare il database: una
+   pagina vuota su una data che non c'e' e' solo un buco SEO, e senza chiave
+   Supabase la lettura alzerebbe un 500 invece del 404 giusto. */
+function dataReale(iso: string): boolean {
+  const d = new Date(`${iso}T00:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === iso;
+}
+
 export async function generateMetadata({ params }: Parametri): Promise<Metadata> {
   const { data } = await params;
-  if (!DATA_OK.test(data)) return {};
+  if (!DATA_OK.test(data) || !dataReale(data)) return {};
   const quando = dataInItaliano(data);
   return {
     title: `Sciopero aerei ${quando}: i voli e cosa ti spetta | Rivolio`,
@@ -57,7 +66,7 @@ export async function generateMetadata({ params }: Parametri): Promise<Metadata>
 
 export default async function PaginaGiornoSciopero({ params }: Parametri) {
   const { data } = await params;
-  if (!DATA_OK.test(data)) notFound();
+  if (!DATA_OK.test(data) || !dataReale(data)) notFound();
 
   const scioperi = await scioperiDelGiorno(data);
   if (scioperi.length === 0) notFound();

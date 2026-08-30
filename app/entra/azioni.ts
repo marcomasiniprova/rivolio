@@ -9,6 +9,7 @@ import { benvenuto } from "@/lib/email/messaggi";
 import { percorsoInterno } from "@/lib/api/percorso";
 import { controllaIndirizzo } from "@/lib/email/dominio";
 import { controllaFormato } from "@/lib/email/indirizzo";
+import { ipDaHeaders, oltreIlLimite } from "@/lib/api/limite";
 
 export type Esito = { errore?: string; avviso?: string };
 
@@ -42,6 +43,19 @@ async function origine() {
   const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
   const protocollo = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
   return `${protocollo}://${host}`;
+}
+
+/**
+ * IL FRENO SUL LOGIN (audit esterno, 30/08). La pagina d'accesso non aveva
+ * un tetto d'app: solo i freni di Supabase sotto. Senza, chi prova mille
+ * password a raffica non incontrava niente di nostro. Dieci tentativi al
+ * minuto per IP: un utente vero che sbaglia la password ne fa tre o quattro,
+ * un ciclo automatico si ferma. Zero attrito, nessun captcha.
+ * ⚠️ È il contatore in memoria di lib/api/limite: ferma il curl in loop di un
+ * singolo IP, non un attacco distribuito. Sotto c'è comunque Supabase.
+ */
+async function troppiTentativi(chiave: string, massimo: number): Promise<boolean> {
+  return oltreIlLimite(chiave, ipDaHeaders(await headers()), massimo);
 }
 
 /**
@@ -104,6 +118,10 @@ function inItaliano(messaggio: string): string {
 export async function accedi(_precedente: Esito, dati: FormData): Promise<Esito> {
   if (!SUPABASE_CONFIGURATO) return nonConfigurato();
 
+  if (await troppiTentativi("login", 10)) {
+    return { errore: "Troppi tentativi di accesso. Aspetta un minuto e riprova." };
+  }
+
   const controllo = await emailPerEntrare(String(dati.get("email") ?? ""));
   if (!("ok" in controllo)) return controllo;
   const email = controllo.email;
@@ -126,6 +144,10 @@ export async function accedi(_precedente: Esito, dati: FormData): Promise<Esito>
 /** Registrazione. */
 export async function registrati(_precedente: Esito, dati: FormData): Promise<Esito> {
   if (!SUPABASE_CONFIGURATO) return nonConfigurato();
+
+  if (await troppiTentativi("login-email", 10)) {
+    return { errore: "Troppi tentativi. Aspetta un minuto e riprova." };
+  }
 
   const controllo = await emailPerRegistrarsi(String(dati.get("email") ?? ""));
   if (!("ok" in controllo)) return controllo;
@@ -160,6 +182,10 @@ export async function registrati(_precedente: Esito, dati: FormData): Promise<Es
 /** Accesso senza password: arriva un link via email. */
 export async function linkMagico(_precedente: Esito, dati: FormData): Promise<Esito> {
   if (!SUPABASE_CONFIGURATO) return nonConfigurato();
+
+  if (await troppiTentativi("login-email", 10)) {
+    return { errore: "Troppi tentativi. Aspetta un minuto e riprova." };
+  }
 
   /* Il link magico CREA l'account se non esiste: quindi qui si passa
      dal controllo pieno, non da quello di chi entra. */

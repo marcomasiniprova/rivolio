@@ -35,9 +35,13 @@ import { traccia } from "@/lib/eventi/registra";
  *    il CORS allo stesso sito); l'app nativa nemmeno (non è un browser).
  */
 
-/* 20 al minuto: un utente può controllare qualche volo di fila (la
-   famiglia, l'andata e il ritorno); un ciclo automatico no. */
-const MASSIMO_AL_MINUTO = 20;
+/* 60 al minuto per IP: alzato da 20 (audit esterno, 30/08). Un utente ne
+   controlla qualcuno di fila (la famiglia, l'andata e il ritorno); un ufficio
+   o una rete mobile dietro un solo IP (NAT), in un giorno di sciopero, ne fa
+   di più senza essere un attacco. La spesa vera resta protetta dal tetto sul
+   fornitore (1000/ora in TUTTO il sito), non da questo numero: qui si ferma
+   solo il ciclo automatico grossolano dello stesso indirizzo. */
+const MASSIMO_AL_MINUTO = 60;
 
 /** Come si scrive il cookie della ricevuta: solo server, solo nostro sito. */
 const BISCOTTO = {

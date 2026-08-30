@@ -152,3 +152,50 @@ export async function spedisci({
   console.error("[posta] invio fallito dopo i tentativi:", ultimoMotivo);
   return { ok: false, motivo: ultimoMotivo };
 }
+
+/**
+ * SPEDISCE UN LOTTO in un colpo solo (Resend batch, fino a 100 per chiamata).
+ *
+ * Serve alla newsletter: un ciclo a una email per volta non consegna a
+ * migliaia di iscritti dentro il budget di 8 secondi di Netlify. Il batch
+ * manda cento email con UNA chiamata, ognuna col suo contenuto (il link di
+ * disdetta e' diverso per ognuno).
+ *
+ * ⚠️ Chi chiama deve passare al massimo 100 messaggi per volta (il limite di
+ * Resend); la rotta newsletter lo fa. Non lancia mai: torna quante ne sono
+ * partite e quante no. Niente ritentativo del singolo (a differenza di
+ * `spedisci`): il batch e' per i grandi numeri, dove riprovare l'intero lotto
+ * costerebbe piu' di quanto salva. Le email a colpo solo che DEVONO arrivare
+ * (conferma, verdetto, benvenuto) restano su `spedisci`.
+ */
+export async function spedisciLotto(
+  messaggi: { a: string; oggetto: string; html: string; testo: string }[],
+): Promise<{ inviate: number; fallite: number }> {
+  if (!POSTA_ATTIVA) {
+    console.warn(`[posta] RESEND_API_KEY assente: lotto di ${messaggi.length} email NON spedito`);
+    return { inviate: 0, fallite: messaggi.length };
+  }
+  if (messaggi.length === 0) return { inviate: 0, fallite: 0 };
+
+  const resend = new Resend(CHIAVE);
+  const lotto = messaggi.map((m) => ({
+    from: MITTENTE,
+    to: m.a,
+    ...(RISPOSTA_A ? { replyTo: RISPOSTA_A } : {}),
+    subject: m.oggetto,
+    html: m.html,
+    text: m.testo,
+  }));
+
+  try {
+    const { error } = await resend.batch.send(lotto);
+    if (error) {
+      console.error("[posta] lotto rifiutato:", error.message);
+      return { inviate: 0, fallite: lotto.length };
+    }
+    return { inviate: lotto.length, fallite: 0 };
+  } catch (e) {
+    console.error("[posta] lotto fallito:", e);
+    return { inviate: 0, fallite: lotto.length };
+  }
+}

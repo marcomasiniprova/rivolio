@@ -63,6 +63,11 @@ const HEADER_SICUREZZA = [
 ];
 
 const nextConfig: NextConfig = {
+  /* Via l'header "X-Powered-By: Next.js": dice a un attaccante che
+     tecnologia gira sotto, e non serve a niente di utile (audit esterno,
+     30/08). Si toglie con una riga. */
+  poweredByHeader: false,
+
   async headers() {
     return [
       { source: "/:path*", headers: HEADER_SICUREZZA },

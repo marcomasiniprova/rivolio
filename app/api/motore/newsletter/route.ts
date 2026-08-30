@@ -5,7 +5,7 @@ import { SERVIZIO_ATTIVO, supabaseServizio } from "@/lib/supabase/servizio";
 import { componiNewsletter } from "@/lib/email/newsletter";
 import { iscrittiConfermati } from "@/lib/iscritti/lista";
 import { vestito } from "@/lib/email/modello";
-import { casa, spedisci } from "@/lib/email/posta";
+import { casa, spedisciLotto } from "@/lib/email/posta";
 import { linkDisdetta } from "@/lib/iscritti/gettone";
 
 /**
@@ -15,26 +15,34 @@ import { linkDisdetta } from "@/lib/iscritti/gettone";
  * l'email UNA volta (una chiamata all'AI), poi la spedisce a tutti gli
  * iscritti confermati, ognuno col suo link di disdetta.
  *
- * ⚠️ NON PUÒ MANDARE DUE VOLTE NELLA STESSA SETTIMANA. Prima di spedire si
- * "prenota" la settimana con un insert atomico in `newsletter_uscite`: se
- * quella riga c'è già (23505), il giro è già stato fatto e ci si ferma. Se
- * la tabella non esiste ancora, il guardiano si fa da parte (fail-open) e
- * la newsletter parte lo stesso: la protezione è un extra, non un cancello
- * che blocca il prodotto.
+ * ⚠️ L'INVIO È A LOTTI (Resend batch, 100 per chiamata), non a una email per
+ * volta. Prima un ciclo singolo mandava una email ogni ~mezzo secondo: dentro
+ * il budget di 8 secondi non consegnava a migliaia di iscritti, e chi restava
+ * fuori NON riceveva mai. A lotti una lista realistica finisce in un colpo.
  *
- * ⚠️ MODO SICURO: se l'interruttore d'emergenza è acceso, non parte niente
- * (come il cron dei follow-up).
+ * ⚠️ NON MANDA DUE VOLTE NELLA STESSA SETTIMANA, e adesso senza mentire. Prima
+ * si "prenotava" la settimana PRIMA di spedire: se il budget interrompeva
+ * l'invio, la settimana risultava mandata anche a chi non l'aveva ricevuta
+ * (silent-miss, trovato il 30/08). Ora la settimana si CHIUDE (una riga in
+ * `newsletter_uscite`) solo DOPO che sono arrivati TUTTI. Se il guardiano non
+ * è disponibile (tabella assente) si manda lo stesso: è un extra, non un
+ * cancello che blocca il prodotto.
  *
- * ⚠️ SCALA. Per ora la lista è corta e il giro finisce in un attimo. Oltre
- * un centinaio di iscritti conviene passare all'invio a lotti di Resend
- * (send-batch) e a un avanzamento per persona: con budget di 8 secondi un
- * loop a una email per volta non consegna a migliaia di iscritti. In
- * ARRETRATI.
+ * ⚠️ MODO SICURO: se l'interruttore d'emergenza è acceso, non parte niente.
+ *
+ * ⚠️ IL LIMITE CHE RESTA, dichiarato: una lista così grande da non entrare
+ * nemmeno a lotti nel budget lascia la settimana APERTA e logga quanti non
+ * sono stati raggiunti (mai un invio muto). Oltre quella scala serve un
+ * avanzamento per-persona (una colonna): è in ARRETRATI, e non serve al
+ * pre-lancio.
  */
 export const dynamic = "force-dynamic";
 
 const CODA =
   "Ricevi questa email perché hai confermato l'iscrizione all'Osservatorio dei Disservizi di Rivolio.";
+
+/** Il massimo che Resend accetta in un lotto solo. */
+const PER_LOTTO = 100;
 
 /** Il lunedì della settimana in corso (UTC), "2026-08-31": chiude il doppio invio. */
 function settimanaCorrente(): string {
@@ -46,27 +54,40 @@ function settimanaCorrente(): string {
 }
 
 /**
- * Prenota la settimana. Torna true se è GIÀ stata mandata (ci si ferma),
- * false se l'abbiamo prenotata ora oppure se il guardiano non è
- * disponibile (fail-open: si manda comunque).
+ * Vero se la newsletter di questa settimana è GIÀ stata chiusa (arrivata a
+ * tutti). Solo lettura: non prenota niente. Se il guardiano non è disponibile
+ * (tabella assente, database giù) torna false e si manda lo stesso (fail-open).
  */
-async function giaMandata(settimana: string): Promise<boolean> {
+async function settimanaChiusa(settimana: string): Promise<boolean> {
   try {
     const { data, error } = await supabaseServizio()
       .from("newsletter_uscite")
-      .insert({ settimana })
-      .select("settimana");
+      .select("settimana")
+      .eq("settimana", settimana)
+      .maybeSingle();
     if (error) {
-      // 23505 = quella settimana c'è già: il giro è stato fatto.
-      if ((error as { code?: string }).code === "23505") return true;
-      // Tabella mancante o altro: il guardiano si fa da parte, si manda lo stesso.
       console.warn("[newsletter] guardiano doppio invio non disponibile:", error.message);
       return false;
     }
-    return !data || data.length === 0;
+    return Boolean(data);
   } catch (e) {
     console.warn("[newsletter] guardiano doppio invio non disponibile:", e);
     return false;
+  }
+}
+
+/**
+ * Chiude la settimana: la newsletter è arrivata a TUTTI, il giro non riparte.
+ * Idempotente: se la riga c'è già (23505) va bene lo stesso.
+ */
+async function chiudiSettimana(settimana: string): Promise<void> {
+  try {
+    const { error } = await supabaseServizio().from("newsletter_uscite").insert({ settimana });
+    if (error && (error as { code?: string }).code !== "23505") {
+      console.warn("[newsletter] settimana non chiusa:", error.message);
+    }
+  } catch (e) {
+    console.warn("[newsletter] settimana non chiusa:", e);
   }
 }
 
@@ -77,7 +98,7 @@ async function giroNewsletter({ budgetMs = 8000 } = {}) {
     return { ok: true as const, modoSicuro: true as const, iscritti: 0, inviate: 0 };
   }
 
-  // Prima si compone: se non c'è niente da dire, non si prenota la settimana
+  // Prima si compone: se non c'è niente da dire, non si chiude la settimana
   // (così quando arrivano i dati la si può ancora mandare).
   const composto = await componiNewsletter();
   if (!composto) {
@@ -89,39 +110,72 @@ async function giroNewsletter({ budgetMs = 8000 } = {}) {
   }
 
   const settimana = settimanaCorrente();
-  if (await giaMandata(settimana)) {
+  if (await settimanaChiusa(settimana)) {
     return { ok: true as const, motivo: "Già mandata questa settimana.", settimana, inviate: 0 };
   }
 
   const iscritti = await iscrittiConfermati();
   if (iscritti.length === 0) {
-    return { ok: true as const, motivo: "Nessun iscritto confermato.", settimana, iscritti: 0, inviate: 0 };
+    return {
+      ok: true as const,
+      motivo: "Nessun iscritto confermato.",
+      settimana,
+      iscritti: 0,
+      inviate: 0,
+    };
   }
+
+  // Ognuno riceve la STESSA email, ma col SUO link di disdetta.
+  const messaggi = iscritti.map((email) => {
+    const disdetta = linkDisdetta(casa(), email);
+    return {
+      a: email,
+      oggetto: composto.oggetto,
+      html: vestito({
+        titolo: "L'Osservatorio dei Disservizi",
+        corpo: composto.corpo,
+        coda: CODA,
+        disdetta,
+      }),
+      testo:
+        composto.testo + (disdetta ? `\n\nPer non ricevere più queste email: ${disdetta}` : ""),
+    };
+  });
 
   const inizio = Date.now();
   let inviate = 0;
   let fallite = 0;
-  let saltatiPerTempo = 0;
+  let saltati = 0;
 
-  for (const email of iscritti) {
+  for (let i = 0; i < messaggi.length; i += PER_LOTTO) {
     if (Date.now() - inizio > budgetMs) {
-      saltatiPerTempo = iscritti.length - inviate - fallite;
+      saltati = messaggi.length - i;
       break;
     }
-    const disdetta = linkDisdetta(casa(), email);
-    const html = vestito({
-      titolo: "L'Osservatorio dei Disservizi",
-      corpo: composto.corpo,
-      coda: CODA,
-      disdetta,
-    });
-    const testo = composto.testo + (disdetta ? `\n\nPer non ricevere più queste email: ${disdetta}` : "");
-    const esito = await spedisci({ a: email, oggetto: composto.oggetto, html, testo });
-    if (esito.ok) inviate++;
-    else fallite++;
+    const esito = await spedisciLotto(messaggi.slice(i, i + PER_LOTTO));
+    inviate += esito.inviate;
+    fallite += esito.fallite;
   }
 
-  return { ok: true as const, settimana, iscritti: iscritti.length, inviate, fallite, saltatiPerTempo };
+  /* La settimana si CHIUDE solo se sono arrivati TUTTI. Se il budget ci ha
+     interrotti resta aperta, e lo diciamo forte: mai un invio muto. */
+  if (saltati === 0) {
+    await chiudiSettimana(settimana);
+  } else {
+    console.warn(
+      `[newsletter] budget finito: ${saltati} iscritti non raggiunti, settimana lasciata aperta`,
+    );
+  }
+
+  return {
+    ok: true as const,
+    settimana,
+    iscritti: iscritti.length,
+    inviate,
+    fallite,
+    saltati,
+    chiusa: saltati === 0,
+  };
 }
 
 export async function POST(req: NextRequest) {

@@ -1800,7 +1800,7 @@
 "DJN":{"icao":null,"nome":"Delta Junction Airport","citta":"Delta Junction","paese":"United States","iso":"US","lat":64.0499,"lon":-145.7227,"tz":"America/Anchorage","peso":0},
 "DJO":{"icao":"DIDL","nome":"Daloa Airport","citta":"Daloa","paese":"Cote d'Ivoire","iso":"CI","lat":6.7928,"lon":-6.4732,"tz":"Africa/Abidjan","peso":1},
 "DJR":{"icao":null,"nome":"Dajarra Airport","citta":"Dajarra Airport","paese":"Australia","iso":"AU","lat":-21.7083,"lon":139.533,"tz":"Australia/Brisbane","peso":0},
-"DJT":{"icao":"KDJT","nome":"President Donald J. Trump International Airport","citta":"West Palm Beach","paese":"United States","iso":"US","lat":26.6832,"lon":-80.0956,"tz":null,"peso":2},
+"DJT":{"icao":"KDJT","nome":"President Donald J. Trump International Airport","citta":"West Palm Beach","paese":"United States","iso":"US","lat":26.6832,"lon":-80.0956,"tz":"America/New_York","peso":2},
 "DJU":{"icao":"BIDV","nome":"Djúpivogur Airport","citta":"Djúpivogur","paese":"Iceland","iso":"IS","lat":64.6424,"lon":-14.2773,"tz":"Atlantic/Reykjavik","peso":0},
 "DKA":{"icao":"DNKT","nome":"Umaru Musa Yar'adua Airport","citta":"Katsina","paese":"Nigeria","iso":"NG","lat":13.0078,"lon":7.6604,"tz":"Africa/Lagos","peso":1},
 "DKI":{"icao":"YDKI","nome":"Dunk Island Airport","citta":"Dunk Island","paese":"Australia","iso":"AU","lat":-17.9391,"lon":146.1414,"tz":"Australia/Brisbane","peso":0},

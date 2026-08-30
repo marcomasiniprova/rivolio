@@ -35,7 +35,7 @@ const base: FattoVolo = {
 test("di un volo che non conosciamo non si dà la colpa all'aeroporto", () => {
   const v = valuta(base);
   expect(v.esito).toBe("incerto");
-  expect(v.motivo).toContain("Non abbiamo trovato dati affidabili");
+  expect(v.motivo).toContain("Non abbiamo ancora un dato certo");
   expect(v.motivo).not.toContain("aeroporto di partenza");
 });
 

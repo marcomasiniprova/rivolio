@@ -12,13 +12,19 @@
 const FINESTRA_MS = 60_000;
 const contatori = new Map<string, number[]>();
 
+/**
+ * L'IP dagli header. Funziona sia da una Request (le rotte API) sia dagli
+ * header di una server action (`headers()` di next/headers): entrambi
+ * espongono un `.get(nome)`, e il freno del login sta in una server action.
+ */
+export function ipDaHeaders(h: { get(nome: string): string | null }): string {
+  const grezzo = h.get("x-nf-client-connection-ip") ?? h.get("x-forwarded-for") ?? "sconosciuto";
+  return grezzo.split(",")[0].trim();
+}
+
 /** L'IP del chiamante: su Netlify sta in x-nf-client-connection-ip. */
 export function ipDi(req: Request): string {
-  const grezzo =
-    req.headers.get("x-nf-client-connection-ip") ??
-    req.headers.get("x-forwarded-for") ??
-    "sconosciuto";
-  return grezzo.split(",")[0].trim();
+  return ipDaHeaders(req.headers);
 }
 
 /**

@@ -143,6 +143,6 @@ test.describe("Le sveglie suonano all'ora italiana", () => {
     const f = leggi("netlify/functions/riepilogo.mjs");
     expect(f, "deve controllare l'ora italiana").toContain("Europe/Rome");
     expect(f, "deve avere l'ora dichiarata una volta sola").toContain("ORA_DEL_RIEPILOGO");
-    expect(f, "deve suonare a entrambe le ore candidate").toContain('schedule: "0 18,19 * * *"');
+    expect(f, "deve suonare a entrambe le ore candidate").toContain('schedule: "0 19,20 * * *"');
   });
 });

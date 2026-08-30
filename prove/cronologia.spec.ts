@@ -17,7 +17,10 @@ import { join } from "node:path";
  * fuori sembra un'altra pratica.
  */
 const RADICE = join(__dirname, "..");
-const leggi = (p: string) => readFileSync(join(RADICE, p), "utf8");
+/* Normalizziamo le terminazioni di riga: su Windows il file e' CRLF, e una
+   ricerca che contiene "\n" non troverebbe una riga che finisce con "\r\n".
+   Senza questo la prova falliva sul PC di Valerio ma passava nel cloud. */
+const leggi = (p: string) => readFileSync(join(RADICE, p), "utf8").replace(/\r\n/g, "\n");
 
 test("gli eventi si ordinano anche per id, non solo per data", () => {
   const f = leggi("lib/pratiche/pratiche.ts");

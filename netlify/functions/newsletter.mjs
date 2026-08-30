@@ -37,4 +37,7 @@ const sveglia = async () => {
 
 export default sveglia;
 
-export const config = { schedule: "0 7 * * 1" };
+/* 07:30 del lunedi', NON le 07:00: alle 07:00 gira gia' il cron dei follow-up
+   (segui.mjs), e due sveglie alla stessa ora si contendono database e budget
+   di 8 secondi. Trovato dalla prova reggere.spec.ts (30/08). */
+export const config = { schedule: "30 7 * * 1" };
